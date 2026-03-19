@@ -124,8 +124,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .pm-icon{font-size:26px;margin-bottom:10px;}
 .pm-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:3px;}
 .pm-desc{font-size:11px;color:var(--muted);line-height:1.4;}
-.direction-row{display:flex;align-items:center;gap:8px;padding:.75rem 0;flex-wrap:wrap;}
-.dir-label{font-size:13px;color:var(--txt2);font-weight:500;}
+.direction-row{display:flex;align-items:center;gap:6px;padding:.75rem 0;flex-wrap:nowrap;overflow-x:auto;}
+.dir-label{font-size:13px;color:var(--txt2);font-weight:500;white-space:nowrap;flex-shrink:0;}
 
 /* WORDS TAB */
 .add-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh);}
@@ -339,6 +339,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 </div>
 
 <!-- APP -->
+<div id="screen-denied" class="screen">
+  <div class="auth-wrap">
+    <div class="auth-logo"><span class="logotype">lexis</span><div class="logo-dot"></div></div>
+    <div class="auth-card" style="text-align:center;gap:16px;">
+      <div style="font-size:40px;">🔒</div>
+      <div style="font-size:16px;font-weight:600;color:var(--txt);">Доступ закрыт</div>
+      <div style="font-size:13px;color:var(--txt2);line-height:1.6;">Это приложение доступно только для членов семьи. Обратись к владельцу чтобы получить доступ.</div>
+    </div>
+  </div>
+</div>
+
 <div id="screen-app" class="screen">
   <header class="app-header">
     <div class="header-brand"><span class="logotype sm">lexis</span><div class="logo-dot sm"></div></div>
@@ -353,7 +364,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <button class="bnav active" onclick="switchTab('dashboard',this)"><span class="bnav-icon">⌂</span><span>Главная</span></button>
     <button class="bnav" onclick="switchTab('practice',this)"><span class="bnav-icon">▷</span><span>Практика</span></button>
     <button class="bnav" onclick="switchTab('words',this)"><span class="bnav-icon">☰</span><span>Слова</span></button>
-    <button class="bnav" onclick="switchTab('settings',this)"><span class="bnav-icon">⚙</span><span>Настройки</span></button>
+    <button class="bnav" onclick="switchTab('settings',this)"><span class="bnav-icon">◈</span><span>Настройки</span></button>
   </nav>
 
   <!-- DASHBOARD -->
@@ -609,27 +620,39 @@ let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,time
 window.Telegram?.WebApp?.ready();
 window.Telegram?.WebApp?.expand();
 
+// ── БЕЛЫЙ СПИСОК — добавь Telegram ID каждого члена семьи ──
+// Узнать свой ID: напиши @userinfobot в Telegram
+const ALLOWED_TG_IDS = [
+  '123456789',   // Алексей — замени на реальный ID
+  '987654321',   // Мария — замени на реальный ID
+  // добавляй сюда новых членов семьи
+];
+
 (async()=>{
   const tg=window.Telegram?.WebApp;
   if(!tg?.initDataUnsafe?.user)return;
   const tgUser=tg.initDataUnsafe.user;
-  const tgId=String(tgUser.id); // используем числовой ID, а не username
+  const tgId=String(tgUser.id);
   const displayName=tgUser.username||tgUser.first_name||'user_'+tgId;
+
+  // Проверяем белый список
+  if(ALLOWED_TG_IDS.length>0 && !ALLOWED_TG_IDS.includes(tgId)){
+    // Показываем экран отказа вместо логина
+    document.getElementById('screen-auth').classList.remove('active');
+    document.getElementById('screen-denied').classList.add('active');
+    return;
+  }
+
   try{
-    // Ищем по tg_id — не по username (username может меняться)
     let u=await gUByTg(tgId);
     if(!u){
-      // Новый пользователь через Telegram
-      // Генерируем криптографически случайный пароль — пользователь его не знает
-      // Аутентификация только через Telegram initData
       const salt=genSalt(24);
-      const randPass=genSalt(32); // случайный, пользователь его не вводит
+      const randPass=genSalt(32);
       const ph=await hp(randPass,salt);
       u=await cU(displayName,ph,salt,tgId);
     }
     if(u)await lok(u);
   }catch(ex){
-    // Не блокируем — дадим войти вручную
     console.warn('TG auto-login failed:',ex.message);
   }
 })();
@@ -646,8 +669,6 @@ async function authLogin(){
   if(name.length<2){err.textContent='Имя минимум 2 символа';return;}
   if(name.length>50){err.textContent='Имя максимум 50 символов';return;}
   if(pass.length<4){err.textContent='Пароль минимум 4 символа';return;}
-
-  // Санитизация — только безопасные символы в имени
   if(!/^[\w\s\-а-яёА-ЯЁ]+$/u.test(name)){err.textContent='Имя содержит недопустимые символы';return;}
 
   const btn=document.getElementById('auth-btn');
