@@ -2,109 +2,206 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
-<title>Lexis — учи слова</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Lexis</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
 
-<!-- AUTH SCREEN -->
+<!-- ── AUTH ─────────────────────────────────── -->
 <div id="screen-auth" class="screen active">
   <div class="auth-wrap">
-    <div class="auth-logo">
-      <span class="logo-text">lexis</span>
-      <div class="logo-dot"></div>
-    </div>
-    <p class="auth-sub">семейный словарь</p>
+    <div class="auth-logo"><span class="logotype">lexis</span><div class="logo-dot"></div></div>
+    <p class="auth-tagline">семейный словарь</p>
     <div class="auth-card">
       <div class="field-group">
-        <label>имя пользователя</label>
-        <input id="auth-name" type="text" placeholder="например: Алексей" maxlength="30"/>
+        <label>имя</label>
+        <input id="auth-name" type="text" placeholder="например: Алексей" maxlength="30" autocomplete="username"/>
       </div>
       <div class="field-group">
         <label>пароль</label>
-        <input id="auth-pass" type="password" placeholder="придумай пароль"/>
+        <input id="auth-pass" type="password" placeholder="минимум 4 символа" autocomplete="current-password"/>
       </div>
       <div id="auth-error" class="error-msg"></div>
-      <button class="btn solid full" onclick="authLogin()">войти / создать аккаунт</button>
+      <button class="btn solid full" id="auth-btn" onclick="authLogin()">войти / создать аккаунт</button>
     </div>
     <p class="auth-hint">если аккаунта нет — он создастся автоматически</p>
   </div>
 </div>
 
-<!-- MAIN APP -->
+<!-- ── MAIN APP ──────────────────────────────── -->
 <div id="screen-app" class="screen">
-  <header class="header">
-    <div class="header-left">
-      <span class="logo-text">lexis</span>
-      <div class="logo-dot"></div>
+
+  <!-- HEADER -->
+  <header class="app-header">
+    <div class="header-brand">
+      <span class="logotype sm">lexis</span>
+      <div class="logo-dot sm"></div>
     </div>
-    <div class="header-right">
-      <span id="header-user" class="header-user"></span>
-      <button class="btn-icon" onclick="logout()" title="выйти">⎋</button>
+    <div class="header-meta">
+      <div class="streak-badge" id="streak-badge">🔥 <span id="streak-count">0</span></div>
+      <span id="header-username" class="header-username"></span>
+      <button class="icon-btn" onclick="logout()" title="выйти">⎋</button>
     </div>
   </header>
 
-  <nav class="nav">
-    <button class="nb active" onclick="go('words',this)">слова</button>
-    <button class="nb" onclick="go('fc',this)">карточки</button>
-    <button class="nb" onclick="go('choice',this)">выбор</button>
-    <button class="nb" onclick="go('typing',this)">письмо</button>
-    <button class="nb" onclick="go('match',this)">пары</button>
+  <!-- NAV TABS -->
+  <nav class="bottom-nav">
+    <button class="bnav active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
+      <span class="bnav-icon">◎</span><span class="bnav-label">главная</span>
+    </button>
+    <button class="bnav" data-tab="practice" onclick="switchTab('practice',this)">
+      <span class="bnav-icon">▷</span><span class="bnav-label">практика</span>
+    </button>
+    <button class="bnav" data-tab="words" onclick="switchTab('words',this)">
+      <span class="bnav-icon">≡</span><span class="bnav-label">слова</span>
+    </button>
   </nav>
 
-  <main class="main-content">
+  <!-- ── TAB: DASHBOARD ── -->
+  <div id="tab-dashboard" class="tab-content active">
 
-    <!-- WORDS -->
-    <div id="s-words" class="tab active">
-      <div class="add-row">
-        <input id="ien" type="text" placeholder="english" onkeydown="if(event.key==='Enter')document.getElementById('iru').focus()"/>
-        <input id="iru" type="text" placeholder="русский" onkeydown="if(event.key==='Enter')addWord()"/>
-        <button class="btn solid icon-btn" onclick="addWord()">+</button>
+    <!-- Daily goal card -->
+    <div class="goal-card">
+      <div class="goal-top">
+        <div>
+          <div class="goal-label">дневная цель</div>
+          <div class="goal-numbers"><span id="goal-done">0</span><span class="goal-sep">/</span><span id="goal-total">10</span></div>
+        </div>
+        <div class="goal-ring-wrap">
+          <svg class="goal-ring" viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="4"/>
+            <circle id="goal-arc" cx="22" cy="22" r="18" fill="none" stroke="#c8f078" stroke-width="4"
+              stroke-linecap="round" stroke-dasharray="113" stroke-dashoffset="113"
+              transform="rotate(-90 22 22)" style="transition:stroke-dashoffset 0.6s ease"/>
+          </svg>
+          <span id="goal-pct" class="goal-pct">0%</span>
+        </div>
       </div>
-      <div class="stats-strip">
-        <div class="stat"><div class="sn" id="st-total">0</div><div class="sl">всего</div></div>
-        <div class="stat"><div class="sn good" id="st-know">0</div><div class="sl">знаю</div></div>
-        <div class="stat"><div class="sn muted" id="st-new">0</div><div class="sl">новых</div></div>
-      </div>
-      <div id="wlist" class="wlist"></div>
+      <button class="btn-study" id="btn-study" onclick="startSmartSession()">
+        <span class="btn-study-text">учить сейчас</span>
+        <span class="btn-study-count" id="study-count-badge"></span>
+      </button>
     </div>
 
-    <!-- FLASHCARD -->
-    <div id="s-fc" class="tab">
-      <div class="pills">
-        <button class="pill active" id="fce" onclick="setMode('fc','en')">EN → RU</button>
-        <button class="pill" id="fcr" onclick="setMode('fc','ru')">RU → EN</button>
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-pill">
+        <span class="sp-n" id="dash-total">0</span>
+        <span class="sp-l">всего</span>
       </div>
-      <div id="fcb"></div>
-    </div>
-
-    <!-- CHOICE -->
-    <div id="s-choice" class="tab">
-      <div class="pills">
-        <button class="pill active" id="che" onclick="setMode('ch','en')">EN → RU</button>
-        <button class="pill" id="chr" onclick="setMode('ch','ru')">RU → EN</button>
+      <div class="stat-pill">
+        <span class="sp-n danger" id="dash-new">0</span>
+        <span class="sp-l">новых</span>
       </div>
-      <div id="chb"></div>
-    </div>
-
-    <!-- TYPING -->
-    <div id="s-typing" class="tab">
-      <div class="pills">
-        <button class="pill active" id="tye" onclick="setMode('ty','en')">RU → EN</button>
-        <button class="pill" id="tyr" onclick="setMode('ty','ru')">EN → RU</button>
+      <div class="stat-pill">
+        <span class="sp-n warn" id="dash-learning">0</span>
+        <span class="sp-l">учу</span>
       </div>
-      <div id="tyb"></div>
+      <div class="stat-pill">
+        <span class="sp-n good" id="dash-know">0</span>
+        <span class="sp-l">знаю</span>
+      </div>
     </div>
 
-    <!-- MATCH -->
-    <div id="s-match" class="tab">
-      <div id="mtb"></div>
+    <!-- Word map -->
+    <div class="section-header">карта слов</div>
+    <div id="word-map" class="word-map"></div>
+
+    <!-- Due words -->
+    <div class="section-header">пора повторить <span id="due-count" class="badge-count"></span></div>
+    <div id="due-list" class="due-list"></div>
+
+  </div>
+
+  <!-- ── TAB: PRACTICE ── -->
+  <div id="tab-practice" class="tab-content">
+    <div class="practice-modes">
+      <div class="pm-card" onclick="startSession('flashcard')">
+        <div class="pm-icon">◈</div>
+        <div class="pm-title">карточки</div>
+        <div class="pm-desc">переворачивай и оценивай</div>
+      </div>
+      <div class="pm-card" onclick="startSession('choice')">
+        <div class="pm-icon">◉</div>
+        <div class="pm-title">выбор ответа</div>
+        <div class="pm-desc">4 варианта, выбери верный</div>
+      </div>
+      <div class="pm-card" onclick="startSession('typing')">
+        <div class="pm-icon">◌</div>
+        <div class="pm-title">написать</div>
+        <div class="pm-desc">введи перевод вручную</div>
+      </div>
+      <div class="pm-card" onclick="startSession('match')">
+        <div class="pm-icon">⊞</div>
+        <div class="pm-title">пары</div>
+        <div class="pm-desc">соедини слова с переводом</div>
+      </div>
+    </div>
+    <div class="direction-row">
+      <span class="dir-label">направление:</span>
+      <button class="pill active" id="dir-en" onclick="setDir('en')">EN → RU</button>
+      <button class="pill" id="dir-ru" onclick="setDir('ru')">RU → EN</button>
+    </div>
+  </div>
+
+  <!-- ── TAB: WORDS ── -->
+  <div id="tab-words" class="tab-content">
+    <div class="add-section">
+      <div class="add-fields">
+        <input id="inp-en" type="text" placeholder="english word" onkeydown="if(event.key==='Enter')document.getElementById('inp-ru').focus()"/>
+        <input id="inp-ru" type="text" placeholder="перевод" onkeydown="if(event.key==='Enter')document.getElementById('inp-tr').focus()"/>
+        <input id="inp-tr" type="text" placeholder="транскрипция (опционально)" onkeydown="if(event.key==='Enter')addWord()"/>
+      </div>
+      <button class="btn solid full" onclick="addWord()">+ добавить слово</button>
     </div>
 
-  </main>
+    <!-- Import -->
+    <div class="import-section">
+      <div class="import-label">быстрый импорт</div>
+      <textarea id="inp-import" placeholder="word — перевод&#10;another — другой&#10;example — пример" rows="4"></textarea>
+      <button class="btn full" onclick="importWords()">импортировать список</button>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all',this)">все</button>
+      <button class="filter-btn" onclick="setFilter('new',this)">новые</button>
+      <button class="filter-btn" onclick="setFilter('learning',this)">учу</button>
+      <button class="filter-btn" onclick="setFilter('know',this)">знаю</button>
+    </div>
+    <div id="wlist" class="wlist"></div>
+  </div>
+
+</div>
+
+<!-- ── SESSION OVERLAY ───────────────────────── -->
+<div id="session-overlay" class="overlay">
+  <div class="session-header">
+    <button class="icon-btn" onclick="closeSession()">✕</button>
+    <div class="session-progress">
+      <div class="session-pbar"><div id="session-pbar-fill" class="session-pbar-fill"></div></div>
+      <span id="session-counter" class="session-counter"></span>
+    </div>
+    <div class="session-score-wrap"><span id="session-score" class="session-score">0</span></div>
+  </div>
+  <div id="session-body" class="session-body"></div>
+</div>
+
+<!-- ── WORD DETAIL MODAL ─────────────────────── -->
+<div id="word-modal" class="overlay">
+  <div class="modal-card">
+    <div class="modal-header">
+      <span class="modal-title">слово</span>
+      <button class="icon-btn" onclick="closeWordModal()">✕</button>
+    </div>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn danger-btn full" id="modal-delete-btn">удалить слово</button>
+    </div>
+  </div>
 </div>
 
 <script src="db.js"></script>
