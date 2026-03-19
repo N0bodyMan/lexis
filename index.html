@@ -188,12 +188,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .setting-label{font-size:14px;font-weight:500;color:var(--txt);}
 .setting-desc{font-size:11px;color:var(--muted);margin-top:2px;}
 .setting-control input[type=number]{width:80px;text-align:center;padding:8px 10px;}
-.toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
-.toggle input{opacity:0;width:0;height:0;}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0;display:inline-block;}
+.toggle input{opacity:0;width:0;height:0;position:absolute;}
 .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:12px;cursor:pointer;transition:.2s;}
 .toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
 .toggle input:checked + .toggle-slider{background:var(--acc);}
 .toggle input:checked + .toggle-slider:before{transform:translateX(20px);}
+
+/* Заморозка настроек таймера когда он выключен */
+.timer-frozen{opacity:.38;pointer-events:none;user-select:none;}
+.timer-mode-label{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);}
+.timer-mode-label input{width:16px;height:16px;accent-color:var(--acc);cursor:pointer;}
 
 /* SESSION */
 .overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;overflow-y:auto;}
@@ -482,15 +487,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <div class="setting-label">Включить таймер</div>
           <div class="setting-desc">Ограничение времени на вопрос</div>
         </div>
-        <div class="setting-control">
-          <label class="toggle">
-            <input type="checkbox" id="set-timer-on" onchange="toggleTimerSettings(this.checked)"/>
-            <span class="toggle-slider"></span>
-          </label>
-        </div>
+        <label class="toggle">
+          <input type="checkbox" id="set-timer-on" onchange="toggleTimerSettings(this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
       </div>
-      <div id="timer-settings-extra" style="display:none;margin-top:4px;">
-        <div class="setting-row" style="border-top:1px solid var(--border);">
+      <div id="timer-settings-extra">
+        <div class="setting-row" id="timer-row-sec">
           <div>
             <div class="setting-label">Секунд на вопрос</div>
             <div class="setting-desc">От 5 до 120 секунд</div>
@@ -499,23 +502,23 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
             <input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/>
           </div>
         </div>
-        <div class="setting-row" style="border-top:1px solid var(--border);flex-direction:column;align-items:flex-start;gap:10px;">
+        <div class="setting-row" id="timer-row-modes" style="flex-direction:column;align-items:flex-start;gap:10px;">
           <div>
             <div class="setting-label">Упражнения с таймером</div>
-            <div class="setting-desc">Выбери в каких режимах работает таймер</div>
+            <div class="setting-desc">В каких режимах работает таймер</div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:12px;">
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
-              <input type="checkbox" id="timer-fc" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Карточки
+            <label class="timer-mode-label">
+              <input type="checkbox" id="timer-fc" onchange="saveTimerModes()"/> Карточки
             </label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
-              <input type="checkbox" id="timer-ch" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Выбор ответа
+            <label class="timer-mode-label">
+              <input type="checkbox" id="timer-ch" onchange="saveTimerModes()"/> Выбор ответа
             </label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
-              <input type="checkbox" id="timer-ty" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Написать
+            <label class="timer-mode-label">
+              <input type="checkbox" id="timer-ty" onchange="saveTimerModes()"/> Написать
             </label>
-            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
-              <input type="checkbox" id="timer-ma" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Пары
+            <label class="timer-mode-label">
+              <input type="checkbox" id="timer-ma" onchange="saveTimerModes()"/> Пары
             </label>
           </div>
         </div>
@@ -743,8 +746,12 @@ function loadSettings(){
     const sty=document.getElementById('set-ty-size');if(sty)sty.value=settings.ty_size;
     const ton=document.getElementById('set-timer-on');if(ton)ton.checked=!!settings.timer_on;
     const tsec=document.getElementById('set-timer-sec');if(tsec)tsec.value=settings.timer_sec;
+    // Применяем заморозку — видно всегда, но неактивно когда выключено
     const tex=document.getElementById('timer-settings-extra');
-    if(tex)tex.style.display=settings.timer_on?'block':'none';
+    if(tex){
+      if(settings.timer_on) tex.classList.remove('timer-frozen');
+      else tex.classList.add('timer-frozen');
+    }
     const tm=settings.timer_modes||{};
     const tfc=document.getElementById('timer-fc');if(tfc)tfc.checked=!!tm.fc;
     const tch=document.getElementById('timer-ch');if(tch)tch.checked=tm.ch!==false;
@@ -756,7 +763,8 @@ function toggleTimerSettings(val){
   settings.timer_on=val;
   const extra=document.getElementById('timer-settings-extra');
   if(extra){
-    extra.style.display=val?'block':'none';
+    if(val) extra.classList.remove('timer-frozen');
+    else extra.classList.add('timer-frozen');
   }
   uU(CU.id,{settings:JSON.stringify(settings)});
 }
