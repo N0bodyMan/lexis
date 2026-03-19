@@ -153,8 +153,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .sort-btn.active{background:var(--acc-bg);border-color:var(--acc);color:var(--acc);}
 
 /* Word actions toolbar */
-.words-actions{display:flex;align-items:center;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;}
-.words-actions-left{display:flex;gap:6px;align-items:center;}
+.words-actions{display:flex;align-items:center;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;min-height:32px;}
+.words-actions-left{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .words-actions-right{display:flex;gap:6px;align-items:center;margin-left:auto;}
 .selected-info{font-size:12px;color:var(--acc);font-weight:600;padding:4px 8px;background:var(--acc-bg);border-radius:8px;display:none;}
 .selected-info.visible{display:block;}
@@ -444,8 +444,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <span class="selected-info" id="sel-info"></span>
         <button class="btn sm danger-btn" id="del-sel-btn" style="display:none" onclick="deleteSelected()">🗑 Удалить</button>
       </div>
-      <div class="words-actions-right">
-      
     </div>
 
     <div id="wlist" class="wlist"></div>
@@ -483,7 +481,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <label class="toggle"><input type="checkbox" id="set-timer-on" onchange="saveSetting('timer_on',this.checked)"/><span class="toggle-slider"></span></label>
         </div>
       </div>
-      <div id="timer-settings-extra">
+      <div id="timer-settings-extra" style="display:none">
         <div class="setting-row">
           <div><div class="setting-label">Секунд на вопрос</div><div class="setting-desc">От 5 до 120 секунд</div></div>
           <div class="setting-control"><input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/></div>
@@ -556,7 +554,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <script>
 // ── STATE ─────────────────────────────────────
-let CU=null,words=[],wF='all',dir='en',sortAZ=false;
+let CU=null,words=[],wF='all',dir='en';
+// sortAZ: null = оригинальный порядок, true = A→Z, false = Z→A
+let sortAZ=null;
 let sM=null,sW=[],sI=0,sS=0,sMist=[];
 let fcR=false,chA=false,mSt={},mTmr=null,mSec=0,dDone=0;
 let sessionTimerInterval=null,sessionTimeLeft=0;
@@ -871,9 +871,15 @@ async function upScore(id,d){
 function setFilter(f,btn){wF=f;selectedWords.clear();document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderList();updateSelUI();}
 
 function toggleSort(){
-  sortAZ=!sortAZ;
-  document.getElementById('sort-btn').textContent=sortAZ?'Z→A ↕':'A→Z ↕';
-  document.getElementById('sort-btn').classList.toggle('active',sortAZ);
+  // Три состояния: null → true (A→Z) → false (Z→A) → null
+  if(sortAZ===null) sortAZ=true;
+  else if(sortAZ===true) sortAZ=false;
+  else sortAZ=null;
+
+  const btn=document.getElementById('sort-btn');
+  if(sortAZ===true){btn.textContent='A→Z ↕';btn.classList.add('active');}
+  else if(sortAZ===false){btn.textContent='Z→A ↕';btn.classList.add('active');}
+  else{btn.textContent='A→Z ↕';btn.classList.remove('active');}
   renderList();
 }
 
@@ -884,8 +890,9 @@ function getFilt(){
   else if(wF==='know')list=list.filter(w=>(w.score||0)>=6);
   const q=(document.getElementById('search-inp')?.value||'').toLowerCase().trim();
   if(q)list=list.filter(w=>w.en.toLowerCase().includes(q)||w.ru.toLowerCase().includes(q));
-  if(sortAZ)list.sort((a,b)=>a.en.localeCompare(b.en));
-  else if(sortAZ===false&&q===''){}// keep original order
+  if(sortAZ===true)list.sort((a,b)=>a.en.localeCompare(b.en));
+  else if(sortAZ===false)list.sort((a,b)=>b.en.localeCompare(a.en));
+  // sortAZ===null — оригинальный порядок добавления
   return list;
 }
 
