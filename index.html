@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Lexis — учи слова</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="screen-auth" class="screen active">
+  <div class="auth-wrap">
+    <div class="auth-logo">
+      <span class="logo-text">lexis</span>
+      <div class="logo-dot"></div>
+    </div>
+    <p class="auth-sub">семейный словарь</p>
+    <div class="auth-card">
+      <div class="field-group">
+        <label>имя пользователя</label>
+        <input id="auth-name" type="text" placeholder="например: Алексей" maxlength="30"/>
+      </div>
+      <div class="field-group">
+        <label>пароль</label>
+        <input id="auth-pass" type="password" placeholder="придумай пароль"/>
+      </div>
+      <div id="auth-error" class="error-msg"></div>
+      <button class="btn solid full" onclick="authLogin()">войти / создать аккаунт</button>
+    </div>
+    <p class="auth-hint">если аккаунта нет — он создастся автоматически</p>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="screen-app" class="screen">
+  <header class="header">
+    <div class="header-left">
+      <span class="logo-text">lexis</span>
+      <div class="logo-dot"></div>
+    </div>
+    <div class="header-right">
+      <span id="header-user" class="header-user"></span>
+      <button class="btn-icon" onclick="logout()" title="выйти">⎋</button>
+    </div>
+  </header>
+
+  <nav class="nav">
+    <button class="nb active" onclick="go('words',this)">слова</button>
+    <button class="nb" onclick="go('fc',this)">карточки</button>
+    <button class="nb" onclick="go('choice',this)">выбор</button>
+    <button class="nb" onclick="go('typing',this)">письмо</button>
+    <button class="nb" onclick="go('match',this)">пары</button>
+  </nav>
+
+  <main class="main-content">
+
+    <!-- WORDS -->
+    <div id="s-words" class="tab active">
+      <div class="add-row">
+        <input id="ien" type="text" placeholder="english" onkeydown="if(event.key==='Enter')document.getElementById('iru').focus()"/>
+        <input id="iru" type="text" placeholder="русский" onkeydown="if(event.key==='Enter')addWord()"/>
+        <button class="btn solid icon-btn" onclick="addWord()">+</button>
+      </div>
+      <div class="stats-strip">
+        <div class="stat"><div class="sn" id="st-total">0</div><div class="sl">всего</div></div>
+        <div class="stat"><div class="sn good" id="st-know">0</div><div class="sl">знаю</div></div>
+        <div class="stat"><div class="sn muted" id="st-new">0</div><div class="sl">новых</div></div>
+      </div>
+      <div id="wlist" class="wlist"></div>
+    </div>
+
+    <!-- FLASHCARD -->
+    <div id="s-fc" class="tab">
+      <div class="pills">
+        <button class="pill active" id="fce" onclick="setMode('fc','en')">EN → RU</button>
+        <button class="pill" id="fcr" onclick="setMode('fc','ru')">RU → EN</button>
+      </div>
+      <div id="fcb"></div>
+    </div>
+
+    <!-- CHOICE -->
+    <div id="s-choice" class="tab">
+      <div class="pills">
+        <button class="pill active" id="che" onclick="setMode('ch','en')">EN → RU</button>
+        <button class="pill" id="chr" onclick="setMode('ch','ru')">RU → EN</button>
+      </div>
+      <div id="chb"></div>
+    </div>
+
+    <!-- TYPING -->
+    <div id="s-typing" class="tab">
+      <div class="pills">
+        <button class="pill active" id="tye" onclick="setMode('ty','en')">RU → EN</button>
+        <button class="pill" id="tyr" onclick="setMode('ty','ru')">EN → RU</button>
+      </div>
+      <div id="tyb"></div>
+    </div>
+
+    <!-- MATCH -->
+    <div id="s-match" class="tab">
+      <div id="mtb"></div>
+    </div>
+
+  </main>
+</div>
+
+<script src="db.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
