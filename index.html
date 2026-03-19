@@ -478,32 +478,46 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="settings-section">
       <div class="settings-title">Режим на время</div>
       <div class="setting-row">
-        <div><div class="setting-label">Включить таймер</div><div class="setting-desc">Ограничение времени на вопрос</div></div>
+        <div>
+          <div class="setting-label">Включить таймер</div>
+          <div class="setting-desc">Ограничение времени на вопрос</div>
+        </div>
         <div class="setting-control">
-          <label class="toggle"><input type="checkbox" id="set-timer-on" onchange="saveSetting('timer_on',this.checked)"/><span class="toggle-slider"></span></label>
+          <label class="toggle">
+            <input type="checkbox" id="set-timer-on" onchange="toggleTimerSettings(this.checked)"/>
+            <span class="toggle-slider"></span>
+          </label>
         </div>
       </div>
-      <div id="timer-settings-extra" style="display:none">
-        <div class="setting-row">
-          <div><div class="setting-label">Секунд на вопрос</div><div class="setting-desc">От 5 до 120 секунд</div></div>
-          <div class="setting-control"><input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/></div>
+      <div id="timer-settings-extra" style="display:none;margin-top:4px;">
+        <div class="setting-row" style="border-top:1px solid var(--border);">
+          <div>
+            <div class="setting-label">Секунд на вопрос</div>
+            <div class="setting-desc">От 5 до 120 секунд</div>
+          </div>
+          <div class="setting-control">
+            <input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/>
+          </div>
         </div>
-        <div class="setting-row">
-          <div><div class="setting-label">Применить к упражнениям</div><div class="setting-desc">Выбери где работает таймер</div></div>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;padding:.5rem 0 .75rem">
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="timer-fc" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)"/> Карточки
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="timer-ch" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)" checked/> Выбор ответа
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="timer-ty" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)" checked/> Написать
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
-            <input type="checkbox" id="timer-ma" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)"/> Пары
-          </label>
+        <div class="setting-row" style="border-top:1px solid var(--border);flex-direction:column;align-items:flex-start;gap:10px;">
+          <div>
+            <div class="setting-label">Упражнения с таймером</div>
+            <div class="setting-desc">Выбери в каких режимах работает таймер</div>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
+              <input type="checkbox" id="timer-fc" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Карточки
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
+              <input type="checkbox" id="timer-ch" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Выбор ответа
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
+              <input type="checkbox" id="timer-ty" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Написать
+            </label>
+            <label style="display:flex;align-items:center;gap:7px;font-size:13px;font-weight:500;cursor:pointer;color:var(--txt);">
+              <input type="checkbox" id="timer-ma" onchange="saveTimerModes()" style="width:16px;height:16px;accent-color:var(--acc);cursor:pointer;"/> Пары
+            </label>
+          </div>
         </div>
       </div>
     </div>
@@ -722,13 +736,12 @@ document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='
 // ── SETTINGS ──────────────────────────────────
 function loadSettings(){
   try{const s=CU?.settings?JSON.parse(CU.settings):null;if(s)Object.assign(settings,s);if(s?.timer_modes)settings.timer_modes=Object.assign({fc:false,ch:true,ty:true,ma:false},s.timer_modes);}catch(ex){}
-  // Откладываем обновление DOM на следующий тик — гарантируем что элементы существуют
   requestAnimationFrame(()=>{
     const sg=document.getElementById('set-daily-goal');if(sg)sg.value=settings.daily_goal;
     const sf=document.getElementById('set-fc-size');if(sf)sf.value=settings.fc_size;
     const sc=document.getElementById('set-ch-size');if(sc)sc.value=settings.ch_size;
-    const st=document.getElementById('set-ty-size');if(st)st.value=settings.ty_size;
-    const ton=document.getElementById('set-timer-on');if(ton)ton.checked=settings.timer_on;
+    const sty=document.getElementById('set-ty-size');if(sty)sty.value=settings.ty_size;
+    const ton=document.getElementById('set-timer-on');if(ton)ton.checked=!!settings.timer_on;
     const tsec=document.getElementById('set-timer-sec');if(tsec)tsec.value=settings.timer_sec;
     const tex=document.getElementById('timer-settings-extra');
     if(tex)tex.style.display=settings.timer_on?'block':'none';
@@ -739,10 +752,18 @@ function loadSettings(){
     const tma=document.getElementById('timer-ma');if(tma)tma.checked=!!tm.ma;
   });
 }
+function toggleTimerSettings(val){
+  settings.timer_on=val;
+  const extra=document.getElementById('timer-settings-extra');
+  if(extra){
+    extra.style.display=val?'block':'none';
+  }
+  uU(CU.id,{settings:JSON.stringify(settings)});
+}
 function saveSetting(key,val){
   settings[key]=val;
-  if(key==='timer_on')document.getElementById('timer-settings-extra').style.display=val?'block':'none';
-  uU(CU.id,{settings:JSON.stringify(settings)});renderDash();
+  uU(CU.id,{settings:JSON.stringify(settings)});
+  if(key==='daily_goal')renderDash();
 }
 function saveTimerModes(){
   settings.timer_modes={
