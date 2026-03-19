@@ -339,17 +339,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 </div>
 
 <!-- APP -->
-<div id="screen-denied" class="screen">
-  <div class="auth-wrap">
-    <div class="auth-logo"><span class="logotype">lexis</span><div class="logo-dot"></div></div>
-    <div class="auth-card" style="text-align:center;gap:16px;">
-      <div style="font-size:40px;">🔒</div>
-      <div style="font-size:16px;font-weight:600;color:var(--txt);">Доступ закрыт</div>
-      <div style="font-size:13px;color:var(--txt2);line-height:1.6;">Это приложение доступно только для членов семьи. Обратись к владельцу чтобы получить доступ.</div>
-    </div>
-  </div>
-</div>
-
 <div id="screen-app" class="screen">
   <header class="app-header">
     <div class="header-brand"><span class="logotype sm">lexis</span><div class="logo-dot sm"></div></div>
@@ -620,29 +609,12 @@ let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,time
 window.Telegram?.WebApp?.ready();
 window.Telegram?.WebApp?.expand();
 
-// ── БЕЛЫЙ СПИСОК — добавь Telegram ID каждого члена семьи ──
-// Узнать свой ID: напиши @userinfobot в Telegram
-const ALLOWED_TG_IDS = [
-  '123456789',   // Алексей — замени на реальный ID
-  '987654321',   // Мария — замени на реальный ID
-  // добавляй сюда новых членов семьи
-];
-
 (async()=>{
   const tg=window.Telegram?.WebApp;
   if(!tg?.initDataUnsafe?.user)return;
   const tgUser=tg.initDataUnsafe.user;
   const tgId=String(tgUser.id);
   const displayName=tgUser.username||tgUser.first_name||'user_'+tgId;
-
-  // Проверяем белый список
-  if(ALLOWED_TG_IDS.length>0 && !ALLOWED_TG_IDS.includes(tgId)){
-    // Показываем экран отказа вместо логина
-    document.getElementById('screen-auth').classList.remove('active');
-    document.getElementById('screen-denied').classList.add('active');
-    return;
-  }
-
   try{
     let u=await gUByTg(tgId);
     if(!u){
