@@ -434,7 +434,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <button class="filter-btn" onclick="setFilter('new',this)">Новые</button>
         <button class="filter-btn" onclick="setFilter('learning',this)">Учу</button>
         <button class="filter-btn" onclick="setFilter('know',this)">Знаю</button>
-        <button class="sort-btn" id="sort-btn" onclick="toggleSort()">А→Я ↕</button>
+        <button class="sort-btn" id="sort-btn" onclick="toggleSort()">A→Z ↕</button>
       </div>
     </div>
 
@@ -445,8 +445,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <button class="btn sm danger-btn" id="del-sel-btn" style="display:none" onclick="deleteSelected()">🗑 Удалить</button>
       </div>
       <div class="words-actions-right">
-        <button class="btn sm danger-btn" onclick="confirmClearAll()">Очистить всё</button>
-      </div>
+      
     </div>
 
     <div id="wlist" class="wlist"></div>
@@ -484,9 +483,28 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <label class="toggle"><input type="checkbox" id="set-timer-on" onchange="saveSetting('timer_on',this.checked)"/><span class="toggle-slider"></span></label>
         </div>
       </div>
-      <div class="setting-row" id="timer-seconds-row">
-        <div><div class="setting-label">Секунд на вопрос</div><div class="setting-desc">Для режимов «Написать» и «Выбор»</div></div>
-        <div class="setting-control"><input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/></div>
+      <div id="timer-settings-extra">
+        <div class="setting-row">
+          <div><div class="setting-label">Секунд на вопрос</div><div class="setting-desc">От 5 до 120 секунд</div></div>
+          <div class="setting-control"><input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/></div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Применить к упражнениям</div><div class="setting-desc">Выбери где работает таймер</div></div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;padding:.5rem 0 .75rem">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="timer-fc" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)"/> Карточки
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="timer-ch" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)" checked/> Выбор ответа
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="timer-ty" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)" checked/> Написать
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;">
+            <input type="checkbox" id="timer-ma" onchange="saveTimerModes()" style="width:auto;accent-color:var(--acc)"/> Пары
+          </label>
+        </div>
       </div>
     </div>
   </div>
@@ -545,7 +563,7 @@ let sessionTimerInterval=null,sessionTimeLeft=0;
 let selectedWords=new Set();
 let currentModalWordId=null,inEditMode=false;
 let confirmCallback=null;
-let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:30};
+let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:30,timer_modes:{fc:false,ch:true,ty:true,ma:false}};
 
 // ── TELEGRAM ──────────────────────────────────
 window.Telegram?.WebApp?.ready();
@@ -680,19 +698,33 @@ document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='
 
 // ── SETTINGS ──────────────────────────────────
 function loadSettings(){
-  try{const s=CU?.settings?JSON.parse(CU.settings):null;if(s)Object.assign(settings,s);}catch(ex){}
+  try{const s=CU?.settings?JSON.parse(CU.settings):null;if(s)Object.assign(settings,s);if(s?.timer_modes)settings.timer_modes=Object.assign({fc:false,ch:true,ty:true,ma:false},s.timer_modes);}catch(ex){}
   document.getElementById('set-daily-goal').value=settings.daily_goal;
   document.getElementById('set-fc-size').value=settings.fc_size;
   document.getElementById('set-ch-size').value=settings.ch_size;
   document.getElementById('set-ty-size').value=settings.ty_size;
   document.getElementById('set-timer-on').checked=settings.timer_on;
   document.getElementById('set-timer-sec').value=settings.timer_sec;
-  document.getElementById('timer-seconds-row').style.display=settings.timer_on?'flex':'none';
+  document.getElementById('timer-settings-extra').style.display=settings.timer_on?'block':'none';
+  const tm=settings.timer_modes||{};
+  document.getElementById('timer-fc').checked=!!tm.fc;
+  document.getElementById('timer-ch').checked=tm.ch!==false;
+  document.getElementById('timer-ty').checked=tm.ty!==false;
+  document.getElementById('timer-ma').checked=!!tm.ma;
 }
 function saveSetting(key,val){
   settings[key]=val;
-  if(key==='timer_on')document.getElementById('timer-seconds-row').style.display=val?'flex':'none';
+  if(key==='timer_on')document.getElementById('timer-settings-extra').style.display=val?'block':'none';
   uU(CU.id,{settings:JSON.stringify(settings)});renderDash();
+}
+function saveTimerModes(){
+  settings.timer_modes={
+    fc:document.getElementById('timer-fc').checked,
+    ch:document.getElementById('timer-ch').checked,
+    ty:document.getElementById('timer-ty').checked,
+    ma:document.getElementById('timer-ma').checked
+  };
+  uU(CU.id,{settings:JSON.stringify(settings)});
 }
 
 // ── STREAK ────────────────────────────────────
@@ -840,7 +872,7 @@ function setFilter(f,btn){wF=f;selectedWords.clear();document.querySelectorAll('
 
 function toggleSort(){
   sortAZ=!sortAZ;
-  document.getElementById('sort-btn').textContent=sortAZ?'Я→А ↕':'А→Я ↕';
+  document.getElementById('sort-btn').textContent=sortAZ?'Z→A ↕':'A→Z ↕';
   document.getElementById('sort-btn').classList.toggle('active',sortAZ);
   renderList();
 }
@@ -1017,6 +1049,13 @@ function getSessionSize(mode){
   if(mode==='typing')return settings.ty_size||10;
   return 10;
 }
+function isTimerActive(mode){
+  if(!settings.timer_on)return false;
+  const m=settings.timer_modes||{fc:false,ch:true,ty:true,ma:false};
+  const key=mode==='flashcard'?'fc':mode==='choice'?'ch':mode==='typing'?'ty':mode==='match'?'ma':null;
+  return key?!!m[key]:false;
+}
+
 function startSession(mode,pool){
   sM=mode;sI=0;sS=0;sMist=[];chA=false;fcR=false;
   if(mTmr){clearInterval(mTmr);mTmr=null;}
@@ -1026,22 +1065,33 @@ function startSession(mode,pool){
   sW=srsQ(src,getSessionSize(mode));
   document.getElementById('session-overlay').classList.add('active');
   const clock=document.getElementById('session-clock');
-  clock.style.display=settings.timer_on&&(mode==='choice'||mode==='typing')?'block':'none';
+  clock.style.display=isTimerActive(mode)?'block':'none';
   renderCard();
 }
+
 function closeSession(){
   if(mTmr){clearInterval(mTmr);mTmr=null;}
   if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
   document.getElementById('session-overlay').classList.remove('active');
   renderDash();renderList();
 }
+
 function startQTimer(onExpire){
-  if(!settings.timer_on)return;
+  if(!isTimerActive(sM))return;
   if(sessionTimerInterval)clearInterval(sessionTimerInterval);
   sessionTimeLeft=settings.timer_sec||30;
-  const clock=document.getElementById('session-clock');if(clock)clock.textContent=sessionTimeLeft+'с';
-  sessionTimerInterval=setInterval(()=>{sessionTimeLeft--;if(clock)clock.textContent=sessionTimeLeft+'с';if(sessionTimeLeft<=0){clearInterval(sessionTimerInterval);onExpire();}},1000);
+  const clock=document.getElementById('session-clock');
+  if(clock){clock.textContent=sessionTimeLeft+'с';clock.style.color='var(--warn)';}
+  sessionTimerInterval=setInterval(()=>{
+    sessionTimeLeft--;
+    if(clock){
+      clock.textContent=sessionTimeLeft+'с';
+      clock.style.color=sessionTimeLeft<=5?'var(--danger)':'var(--warn)';
+    }
+    if(sessionTimeLeft<=0){clearInterval(sessionTimerInterval);onExpire();}
+  },1000);
 }
+
 function stopQTimer(){if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}}
 function updP(){const t=sW.length,p=Math.round((sI/t)*100);document.getElementById('spbar').style.width=p+'%';document.getElementById('scounter').textContent=sI+' / '+t;document.getElementById('sscore').textContent=sS;}
 function renderCard(){updP();if(sI>=sW.length){showRes();return;}const w=sW[sI];if(sM==='flashcard')rFC(w);else if(sM==='choice')rCH(w);else if(sM==='typing')rTY(w);else rMatch();}
@@ -1053,27 +1103,60 @@ function rFC(w){
     ?`<div class="fc-answer-pills">${a.map(t=>`<span class="fc-answer-pill">${e(t)}</span>`).join('')}</div>`
     :`<div class="fc-answer">${e(Array.isArray(a)?a[0]:a)}</div>`;
   const sb=document.getElementById('sbody');
-  if(!fcR){sb.innerHTML=`<div class="fc-card" onclick="rvFC()"><span class="fc-hint">Нажми чтобы открыть</span><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}</div>`;}
-  else{sb.innerHTML=`<div class="fc-card" style="cursor:default"><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}${aHtml}</div><div class="rate-row"><button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button><button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button><button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button></div>`;}
+  if(!fcR){
+    sb.innerHTML=`<div class="fc-card" onclick="rvFC()"><span class="fc-hint">Нажми чтобы открыть</span><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}</div>`;
+    // Таймер на карточку — если включён, автоматически переворачивает
+    startQTimer(()=>{rvFC();});
+  }else{
+    stopQTimer();
+    sb.innerHTML=`<div class="fc-card" style="cursor:default"><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}${aHtml}</div><div class="rate-row"><button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button><button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button><button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button></div>`;
+  }
 }
-function rvFC(){fcR=true;rFC(sW[sI]);}
+function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
 async function fcRt(id,d){if(d>0){sS++;dDone++;}else sMist.push(sW[sI]);await upScore(id,d);fcR=false;sI++;renderCard();}
 
-// CHOICE
+// CHOICE — правильный любой перевод из списка
 function rCH(w){
-  const d=getDir(),q=d==='en'?w.en:getPrimary(w),ca=d==='en'?getPrimary(w):w.en;
+  const d=getDir(),q=d==='en'?w.en:getPrimary(w);
+  const allTrans=d==='en'?getWordTranslations(w):[w.en];
+  const primary=allTrans[0]; // показываем первый как правильный вариант
+
+  // Варианты ответов: правильный + 3 случайных чужих
   const oth=words.filter(x=>x.id!==w.id).sort(()=>Math.random()-.5).slice(0,3);
-  const opts=[{id:w.id,t:ca},...oth.map(o=>({id:o.id,t:d==='en'?getPrimary(o):o.en}))].sort(()=>Math.random()-.5);
-  document.getElementById('sbody').innerHTML=`<div class="q-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="q-transcription">[${e(w.transcription)}]</div>`:''}<div class="choices">${opts.map(o=>`<button class="ch-btn" id="co${o.id}" onclick="aCH(${w.id},${o.id})">${e(o.t)}</button>`).join('')}</div><div id="we2" class="wrong-explain"></div><div class="next-wrap" id="nxt"><button class="btn solid" onclick="nCH()">Далее →</button></div>`;
-  startQTimer(()=>{if(!chA)aCH(w.id,-1,true);});
+  const opts=[
+    {id:w.id,t:primary,correct:true},
+    ...oth.map(o=>({id:o.id,t:d==='en'?getPrimary(o):o.en,correct:false}))
+  ].sort(()=>Math.random()-.5);
+
+  document.getElementById('sbody').innerHTML=`
+    <div class="q-word">${e(q)}</div>
+    ${w.transcription&&d==='en'?`<div class="q-transcription">[${e(w.transcription)}]</div>`:''}
+    <div class="choices">${opts.map(o=>`<button class="ch-btn" id="co${o.id}-${o.correct?'ok':'no'}" onclick="aCH(${w.id},'${o.id}',${o.correct})">${e(o.t)}</button>`).join('')}</div>
+    <div id="we2" class="wrong-explain"></div>
+    <div class="next-wrap" id="nxt"><button class="btn solid" onclick="nCH()">Далее →</button></div>`;
+  startQTimer(()=>{if(!chA)aCH(w.id,-1,false,true);});
 }
-async function aCH(cid,ch,timedOut){
-  if(chA)return;chA=true;stopQTimer();const ok=!timedOut&&cid===ch;
+async function aCH(wid, optId, isCorrect, timedOut){
+  if(chA)return;chA=true;stopQTimer();
+  const ok=!timedOut&&isCorrect;
   document.querySelectorAll('.ch-btn').forEach(b=>b.disabled=true);
-  document.getElementById('co'+cid)?.classList.add('ok');
-  if(!ok){if(ch!==-1)document.getElementById('co'+ch)?.classList.add('no');sMist.push(sW[sI]);const ex=document.getElementById('we2');ex.style.display='block';ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильный ответ: '+getPrimary(sW[sI]);}
-  else{sS++;dDone++;}
-  await upScore(cid,ok?2:-1);document.getElementById('nxt').style.display='block';
+  // Подсвечиваем правильный вариант зелёным всегда
+  document.querySelectorAll('.ch-btn').forEach(b=>{
+    if(b.id.endsWith('-ok'))b.classList.add('ok');
+  });
+  if(!ok){
+    // Подсвечиваем выбранный неправильный красным
+    if(optId!==-1){
+      const wrongBtn=document.getElementById(`co${optId}-no`);
+      if(wrongBtn)wrongBtn.classList.add('no');
+    }
+    sMist.push(sW[sI]);
+    const ex=document.getElementById('we2');ex.style.display='block';
+    const allTrans=getDir()==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
+    ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+allTrans.join(' / ');
+  }else{sS++;dDone++;}
+  await upScore(wid,ok?2:-1);
+  document.getElementById('nxt').style.display='block';
 }
 function nCH(){chA=false;sI++;renderCard();}
 
@@ -1115,24 +1198,70 @@ async function chkTY(){
   else{res.className='t-result t-fail';res.textContent='✗ '+getPrimary(w);sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);}
 }
 
-// MATCH — no progress bar, just timer
+// MATCH — прогресс-бар показывает количество найденных пар
 function rMatch(){
   if(mTmr){clearInterval(mTmr);mTmr=null;}mSec=0;
-  const pool=[...words].sort(()=>Math.random()-.5).slice(0,6);
+  const poolSize=Math.min(6,words.length);
+  const pool=[...words].sort(()=>Math.random()-.5).slice(0,poolSize);
   const en=pool.map(w=>({id:w.id,t:w.en})).sort(()=>Math.random()-.5);
   const ru=pool.map(w=>({id:w.id,t:getPrimary(w)})).sort(()=>Math.random()-.5);
-  mSt={sel:null,matched:[],pairs:pool};
-  document.getElementById('sbody').innerHTML=`<div class="match-timer-row"><span class="match-hint">Выбери слово, затем перевод</span><span id="mtmr" class="match-timer">0:00</span></div><div class="match-cols"><div class="match-col">${en.map(i=>`<button class="m-btn" id="me${i.id}" onclick="selM('en',${i.id})">${e(i.t)}</button>`).join('')}</div><div class="match-col">${ru.map(i=>`<button class="m-btn" id="mr${i.id}" onclick="selM('ru',${i.id})">${e(i.t)}</button>`).join('')}</div></div><div id="mmsg" class="match-msg"></div>`;
-  mTmr=setInterval(()=>{mSec++;const m=Math.floor(mSec/60),s=mSec%60;const el=document.getElementById('mtmr');if(el)el.textContent=m+':'+String(s).padStart(2,'0');},1000);
+  mSt={sel:null,matched:[],pairs:pool,total:pool.length};
+  // Инициализируем прогресс под количество пар
+  sW=pool; // sW нужен для updP
+  sI=0;
+  updP();
+  document.getElementById('sbody').innerHTML=`
+    <div class="match-timer-row">
+      <span class="match-hint">Выбери слово, затем перевод</span>
+      <span id="mtmr" class="match-timer">0:00</span>
+    </div>
+    <div class="match-cols">
+      <div class="match-col">${en.map(i=>`<button class="m-btn" id="me${i.id}" onclick="selM('en',${i.id})">${e(i.t)}</button>`).join('')}</div>
+      <div class="match-col">${ru.map(i=>`<button class="m-btn" id="mr${i.id}" onclick="selM('ru',${i.id})">${e(i.t)}</button>`).join('')}</div>
+    </div>
+    <div id="mmsg" class="match-msg"></div>`;
+  mTmr=setInterval(()=>{
+    mSec++;
+    const m=Math.floor(mSec/60),s=mSec%60;
+    const el=document.getElementById('mtmr');
+    if(el)el.textContent=m+':'+String(s).padStart(2,'0');
+  },1000);
 }
 async function selM(lang,id){
-  if(mSt.matched.includes(id))return;const msg=document.getElementById('mmsg');
-  if(lang==='en'){document.querySelectorAll('[id^="me"]').forEach(b=>b.classList.remove('m-sel'));mSt.sel=id;document.getElementById('me'+id).classList.add('m-sel');msg.textContent='Теперь выбери перевод';}
-  else{
+  if(mSt.matched.includes(id))return;
+  const msg=document.getElementById('mmsg');
+  if(lang==='en'){
+    document.querySelectorAll('[id^="me"]').forEach(b=>b.classList.remove('m-sel'));
+    mSt.sel=id;document.getElementById('me'+id).classList.add('m-sel');
+    msg.textContent='Теперь выбери перевод';
+  }else{
     if(!mSt.sel){msg.textContent='Сначала выбери английское слово';return;}
-    const sid=mSt.sel;mSt.sel=null;document.getElementById('me'+sid).classList.remove('m-sel');
-    if(sid===id){document.getElementById('me'+id).classList.add('m-ok');document.getElementById('mr'+id).classList.add('m-ok');document.getElementById('me'+id).disabled=true;document.getElementById('mr'+id).disabled=true;mSt.matched.push(id);await upScore(id,1);dDone++;msg.textContent='✓ Верно!';if(mSt.matched.length===mSt.pairs.length){clearInterval(mTmr);mTmr=null;sS=mSt.pairs.length;sI=sW.length;setTimeout(showRes,600);}}
-    else{const eb=document.getElementById('me'+sid),rb=document.getElementById('mr'+id);eb.classList.add('m-err');rb.classList.add('m-err');msg.textContent='Не то, попробуй снова';setTimeout(()=>{eb.classList.remove('m-err');rb.classList.remove('m-err');msg.textContent='';},700);}
+    const sid=mSt.sel;mSt.sel=null;
+    document.getElementById('me'+sid).classList.remove('m-sel');
+    if(sid===id){
+      document.getElementById('me'+id).classList.add('m-ok');
+      document.getElementById('mr'+id).classList.add('m-ok');
+      document.getElementById('me'+id).disabled=true;
+      document.getElementById('mr'+id).disabled=true;
+      mSt.matched.push(id);
+      await upScore(id,1);dDone++;
+      msg.textContent='✓ Верно!';
+      // Обновляем прогресс-бар
+      sI=mSt.matched.length;
+      updP();
+      if(mSt.matched.length===mSt.pairs.length){
+        clearInterval(mTmr);mTmr=null;
+        sS=mSt.pairs.length;
+        sI=mSt.pairs.length;
+        updP();
+        setTimeout(showRes,600);
+      }
+    }else{
+      const eb=document.getElementById('me'+sid),rb=document.getElementById('mr'+id);
+      eb.classList.add('m-err');rb.classList.add('m-err');
+      msg.textContent='Не то, попробуй снова';
+      setTimeout(()=>{eb.classList.remove('m-err');rb.classList.remove('m-err');msg.textContent='';},700);
+    }
   }
 }
 
