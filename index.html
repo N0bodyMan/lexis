@@ -58,6 +58,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .btn.acc:hover{background:var(--acc-light);}
 .btn.danger-btn{background:var(--danger-bg);border-color:#f5b7b1;color:var(--danger);}
 .btn.danger-btn:hover{background:#fad7d4;}
+.btn.warn-btn{background:var(--warn-bg);border-color:#fdd9a0;color:var(--warn);}
+.btn.warn-btn:hover{background:#fde8b8;}
 .icon-btn{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);color:var(--txt2);width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
 .icon-btn:hover{background:var(--card2);}
 .pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);background:var(--card);color:var(--txt2);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
@@ -505,6 +507,27 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         </div>
       </div>
     </div>
+    <div class="settings-section">
+      <div class="settings-title">Сброс данных</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Сбросить прогресс слов</div>
+          <div class="setting-desc">Обнулить уровень знания всех слов. Сами слова не удаляются</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn sm warn-btn" onclick="confirmResetStats()">Сбросить</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Сбросить стрик</div>
+          <div class="setting-desc">Обнулить серию дней</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn sm" onclick="confirmResetStreak()">Сбросить</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -699,18 +722,22 @@ document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='
 // ── SETTINGS ──────────────────────────────────
 function loadSettings(){
   try{const s=CU?.settings?JSON.parse(CU.settings):null;if(s)Object.assign(settings,s);if(s?.timer_modes)settings.timer_modes=Object.assign({fc:false,ch:true,ty:true,ma:false},s.timer_modes);}catch(ex){}
-  document.getElementById('set-daily-goal').value=settings.daily_goal;
-  document.getElementById('set-fc-size').value=settings.fc_size;
-  document.getElementById('set-ch-size').value=settings.ch_size;
-  document.getElementById('set-ty-size').value=settings.ty_size;
-  document.getElementById('set-timer-on').checked=settings.timer_on;
-  document.getElementById('set-timer-sec').value=settings.timer_sec;
-  document.getElementById('timer-settings-extra').style.display=settings.timer_on?'block':'none';
-  const tm=settings.timer_modes||{};
-  document.getElementById('timer-fc').checked=!!tm.fc;
-  document.getElementById('timer-ch').checked=tm.ch!==false;
-  document.getElementById('timer-ty').checked=tm.ty!==false;
-  document.getElementById('timer-ma').checked=!!tm.ma;
+  // Откладываем обновление DOM на следующий тик — гарантируем что элементы существуют
+  requestAnimationFrame(()=>{
+    const sg=document.getElementById('set-daily-goal');if(sg)sg.value=settings.daily_goal;
+    const sf=document.getElementById('set-fc-size');if(sf)sf.value=settings.fc_size;
+    const sc=document.getElementById('set-ch-size');if(sc)sc.value=settings.ch_size;
+    const st=document.getElementById('set-ty-size');if(st)st.value=settings.ty_size;
+    const ton=document.getElementById('set-timer-on');if(ton)ton.checked=settings.timer_on;
+    const tsec=document.getElementById('set-timer-sec');if(tsec)tsec.value=settings.timer_sec;
+    const tex=document.getElementById('timer-settings-extra');
+    if(tex)tex.style.display=settings.timer_on?'block':'none';
+    const tm=settings.timer_modes||{};
+    const tfc=document.getElementById('timer-fc');if(tfc)tfc.checked=!!tm.fc;
+    const tch=document.getElementById('timer-ch');if(tch)tch.checked=tm.ch!==false;
+    const tty=document.getElementById('timer-ty');if(tty)tty.checked=tm.ty!==false;
+    const tma=document.getElementById('timer-ma');if(tma)tma.checked=!!tm.ma;
+  });
 }
 function saveSetting(key,val){
   settings[key]=val;
@@ -1100,7 +1127,17 @@ function startQTimer(onExpire){
 }
 
 function stopQTimer(){if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}}
-function updP(){const t=sW.length,p=Math.round((sI/t)*100);document.getElementById('spbar').style.width=p+'%';document.getElementById('scounter').textContent=sI+' / '+t;document.getElementById('sscore').textContent=sS;}
+function updP(){
+  const t=sW.length;
+  if(!t)return;
+  // Для match прогресс считается отдельно через sI=matched.length
+  // Для остальных: показываем номер текущей карточки (sI+1), но не больше t
+  const display=sM==='match'?sI:Math.min(sI+1,t);
+  const p=Math.round((sI/t)*100);
+  document.getElementById('spbar').style.width=p+'%';
+  document.getElementById('scounter').textContent=display+' / '+t;
+  document.getElementById('sscore').textContent=sS;
+}
 function renderCard(){updP();if(sI>=sW.length){showRes();return;}const w=sW[sI];if(sM==='flashcard')rFC(w);else if(sM==='choice')rCH(w);else if(sM==='typing')rTY(w);else rMatch();}
 
 // FLASHCARD
@@ -1167,29 +1204,69 @@ async function aCH(wid, optId, isCorrect, timedOut){
 }
 function nCH(){chA=false;sI++;renderCard();}
 
-// TYPING — check against ALL translations
+// TYPING
+// smatch: проверяет введённое слово против списка правильных ответов
 function smatch(a,trans){
   const x=a.toLowerCase().trim();
   const strip=s=>s.replace(/^(a |an |the |to )/i,'').trim();
   for(const t of trans){const y=t.toLowerCase().trim();if(x===y||strip(x)===strip(y))return'ok';}
-  // near match against primary
   const y=trans[0]?.toLowerCase().trim()||'';
   if(Math.abs(x.length-y.length)<=2){let d=0;for(let i=0;i<Math.max(x.length,y.length);i++)if(x[i]!==y[i])d++;if(d<=2&&d>0)return'near';}
   return'fail';
 }
+
+// d='en' = EN→RU: показываем английское слово, пользователь вводит русский перевод
+// d='ru' = RU→EN: показываем русское слово, пользователь вводит английское
 function rTY(w){
-  const d=getDir(),q=d==='en'?getPrimary(w):w.en;
-  const sb=document.getElementById('sbody');sb.dataset.wid=w.id;sb.dataset.dir=d;
-  sb.innerHTML=`<div class="t-question">${e(q)}</div>${w.transcription&&d==='ru'?`<div class="t-transcription">[${e(w.transcription)}]</div>`:''}<div class="t-input-row"><input type="text" id="tyi" placeholder="Введи перевод..." onkeydown="if(event.key==='Enter')chkTY()"/><button class="btn solid" onclick="chkTY()">✓</button></div><div id="tyr" class="t-result"></div><div class="t-actions"><span class="skip-link" onclick="sI++;renderCard()">Пропустить</span><span class="hint-link" onclick="showHint()">Подсказка 💡</span></div>`;
+  const d=getDir();
+  // Вопрос: что показываем пользователю
+  const q = d==='en' ? w.en : getPrimary(w);
+  // Транскрипция показывается когда задаём английское слово
+  const showTr = w.transcription && d==='en';
+  const sb=document.getElementById('sbody');
+  sb.dataset.wid=w.id;
+  sb.dataset.dir=d;
+  sb.innerHTML=`
+    <div class="t-question">${e(q)}</div>
+    ${showTr?`<div class="t-transcription">[${e(w.transcription)}]</div>`:''}
+    <div class="t-input-row">
+      <input type="text" id="tyi" placeholder="Введи перевод..." onkeydown="if(event.key==='Enter')chkTY()"/>
+      <button class="btn solid" onclick="chkTY()">✓</button>
+    </div>
+    <div id="tyr" class="t-result"></div>
+    <div class="t-actions">
+      <span class="skip-link" onclick="sI++;renderCard()">Пропустить</span>
+      <span class="hint-link" onclick="showHint()">Подсказка 💡</span>
+    </div>`;
   setTimeout(()=>{const i=document.getElementById('tyi');if(i)i.focus();},50);
-  startQTimer(()=>{const res=document.getElementById('tyr');if(res&&!res.textContent){stopQTimer();res.style.display='block';res.className='t-result t-fail';const w2=sW[sI];res.textContent='⏱ Время вышло! Ответ: '+(sb.dataset.dir==='en'?w2.en:getPrimary(w2));const inp=document.getElementById('tyi');if(inp)inp.disabled=true;sMist.push(sW[sI]);upScore(parseInt(sb.dataset.wid),-1);sI++;setTimeout(renderCard,1800);}});
+  startQTimer(()=>{
+    const res=document.getElementById('tyr');
+    if(res&&!res.textContent){
+      stopQTimer();
+      res.style.display='block';res.className='t-result t-fail';
+      const w2=sW[sI];
+      // Правильный ответ: если EN→RU показываем русский, если RU→EN показываем английский
+      const correctAns=sb.dataset.dir==='en'?getPrimary(w2):w2.en;
+      res.textContent='⏱ Время вышло! Ответ: '+correctAns;
+      const inp=document.getElementById('tyi');if(inp)inp.disabled=true;
+      sMist.push(sW[sI]);upScore(parseInt(sb.dataset.wid),-1);
+      sI++;setTimeout(renderCard,1800);
+    }
+  });
 }
 function showHint(){
   const sb=document.getElementById('sbody'),d=sb.dataset.dir;
-  const w=sW[sI];const ans=d==='en'?w.en:getPrimary(w);
+  const w=sW[sI];
+  // Подсказка показывает правильный ответ частично
+  const ans=d==='en'?getPrimary(w):w.en;
   let hEl=document.getElementById('hint-box');
-  if(!hEl){hEl=document.createElement('div');hEl.id='hint-box';hEl.style.cssText='font-size:18px;letter-spacing:4px;color:var(--acc);font-weight:600;margin-top:8px;font-family:monospace;';document.getElementById('tyr').insertAdjacentElement('afterend',hEl);}
-  const half=Math.ceil(ans.length/2);hEl.textContent=ans.split('').map((c,i)=>i<half?c:'_').join(' ');
+  if(!hEl){
+    hEl=document.createElement('div');hEl.id='hint-box';
+    hEl.style.cssText='font-size:18px;letter-spacing:4px;color:var(--acc);font-weight:600;margin-top:8px;font-family:monospace;';
+    document.getElementById('tyr').insertAdjacentElement('afterend',hEl);
+  }
+  const half=Math.ceil(ans.length/2);
+  hEl.textContent=ans.split('').map((c,i)=>i<half?c:'_').join(' ');
 }
 async function chkTY(){
   stopQTimer();
@@ -1197,12 +1274,21 @@ async function chkTY(){
   if(!inp||!res||!inp.value.trim())return;
   const ua=inp.value.trim(),wid=parseInt(sb.dataset.wid),d=sb.dataset.dir;
   const w=sW[sI];
+  // Правильные варианты: если EN→RU принимаем все переводы, если RU→EN принимаем английское
   const correctTrans=d==='en'?getWordTranslations(w):[w.en];
   const r=smatch(ua,correctTrans);
   res.style.display='block';inp.disabled=true;
-  if(r==='ok'){res.className='t-result t-ok';res.textContent='✓ Верно!';sS++;dDone++;await upScore(wid,2);sI++;setTimeout(renderCard,1200);}
-  else if(r==='near'){res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+getPrimary(w);await upScore(wid,1);dDone++;sI++;setTimeout(renderCard,1800);}
-  else{res.className='t-result t-fail';res.textContent='✗ '+getPrimary(w);sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);}
+  const primaryCorrect=d==='en'?getPrimary(w):w.en;
+  if(r==='ok'){
+    res.className='t-result t-ok';res.textContent='✓ Верно!';
+    sS++;dDone++;await upScore(wid,2);sI++;setTimeout(renderCard,1200);
+  }else if(r==='near'){
+    res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+primaryCorrect;
+    await upScore(wid,1);dDone++;sI++;setTimeout(renderCard,1800);
+  }else{
+    res.className='t-result t-fail';res.textContent='✗ '+primaryCorrect;
+    sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);
+  }
 }
 
 // MATCH — прогресс-бар показывает количество найденных пар
@@ -1299,6 +1385,39 @@ function showConfirm(title,msg,cb){
   confirmCallback=cb;document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-msg').textContent=msg;document.getElementById('confirm-overlay').classList.add('active');
 }
 function confirmOk(){document.getElementById('confirm-overlay').classList.remove('active');if(confirmCallback)confirmCallback();confirmCallback=null;}
+
+// Сброс статистики — обнуляет score и next_review всех слов
+function confirmResetStats(){
+  showConfirm(
+    'Сбросить прогресс?',
+    'Уровень знания всех слов будет обнулён. Сами слова останутся. Это действие нельзя отменить.',
+    async()=>{
+      const CHUNK=20;
+      const toReset=words.filter(w=>(w.score||0)>0);
+      if(!toReset.length){showSnack('Нечего сбрасывать — все слова уже на нуле');return;}
+      showSnack('Сбрасываю прогресс...');
+      for(let i=0;i<toReset.length;i+=CHUNK){
+        const chunk=toReset.slice(i,i+CHUNK);
+        await Promise.allSettled(chunk.map(w=>upW(w.id,{score:0,next_review:new Date().toISOString(),review_count:0,last_reviewed:null})));
+        chunk.forEach(w=>{w.score=0;w.review_count=0;w.next_review=new Date().toISOString();w.last_reviewed=null;});
+      }
+      dDone=0;
+      renderDash();renderList();
+      showSnack('✓ Прогресс сброшен');
+    }
+  );
+}
+
+// Сброс стрика
+function confirmResetStreak(){
+  showConfirm('Сбросить стрик?','Серия дней будет обнулена.',async()=>{
+    CU.streak=0;CU.last_practice=null;
+    await uU(CU.id,{streak:0,last_practice:null});
+    localStorage.setItem('lx',JSON.stringify({...CU,streak:0,last_practice:null}));
+    document.getElementById('streak-count').textContent='0';
+    showSnack('Стрик сброшен');
+  });
+}
 function confirmCancel(){document.getElementById('confirm-overlay').classList.remove('active');confirmCallback=null;}
 
 // ── UTIL ──────────────────────────────────────
