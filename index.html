@@ -46,18 +46,18 @@ textarea{resize:vertical;min-height:90px;line-height:1.6;}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239c9990' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;cursor:pointer;}
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 18px;border-radius:var(--r);border:1.5px solid var(--border2);background:var(--card);color:var(--txt);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:9px 16px;border-radius:var(--r);border:1.5px solid var(--border2);background:var(--card);color:var(--txt);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;white-space:nowrap;gap:5px;}
 .btn:hover{background:var(--card2);}
 .btn:active{transform:scale(.98);}
 .btn.solid{background:var(--acc);border-color:var(--acc);color:#fff;}
 .btn.solid:hover{background:#245a41;}
 .btn.full{width:100%;}
-.btn.sm{padding:5px 11px;font-size:12px;border-radius:8px;}
+.btn.sm{padding:6px 12px;font-size:12px;border-radius:8px;}
+.btn.xs{padding:4px 9px;font-size:11px;border-radius:7px;}
 .btn.acc{background:var(--acc-bg);border-color:var(--acc-light);color:var(--acc);}
 .btn.acc:hover{background:var(--acc-light);}
 .btn.danger-btn{background:var(--danger-bg);border-color:#f5b7b1;color:var(--danger);}
 .btn.danger-btn:hover{background:#fad7d4;}
-.btn.warn-btn{background:var(--warn-bg);border-color:#fdd9a0;color:var(--warn);}
 .icon-btn{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);color:var(--txt2);width:36px;height:36px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
 .icon-btn:hover{background:var(--card2);}
 .pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);background:var(--card);color:var(--txt2);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
@@ -67,7 +67,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* LAYOUT */
 #screen-app{display:none;flex-direction:column;min-height:100vh;padding-top:var(--hh);padding-bottom:var(--nh);}
 #screen-app.active{display:flex;}
-
 .app-header{position:fixed;top:0;left:0;right:0;z-index:100;height:var(--hh);display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;background:var(--card);border-bottom:1px solid var(--border);box-shadow:var(--sh);}
 .header-brand{display:flex;align-items:center;gap:7px;}
 .header-meta{display:flex;align-items:center;gap:8px;}
@@ -96,7 +95,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .btn-study{width:100%;padding:14px;background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.35);border-radius:var(--r-lg);font-family:'Playfair Display',serif;font-size:19px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;}
 .btn-study:hover{background:rgba(255,255,255,.3);}
 .btn-study-count{font-family:'Inter',sans-serif;font-size:12px;font-weight:500;background:rgba(0,0,0,.15);border-radius:12px;padding:2px 8px;}
-
 .stats-row{display:flex;gap:8px;margin-bottom:1.25rem;}
 .stat-pill{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:12px 8px;text-align:center;box-shadow:var(--sh);}
 .sp-n{display:block;font-size:22px;font-weight:600;color:var(--txt);}
@@ -104,15 +102,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .sp-n.warn{color:var(--warn);}
 .sp-n.danger{color:var(--danger);}
 .sp-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:500;}
-
-.section-header{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;margin:1.25rem 0 .75rem;display:flex;align-items:center;gap:8px;}
+.section-header{font-size:12px;color:var(--muted);letter-spacing:.05em;font-weight:600;margin:1.25rem 0 .75rem;display:flex;align-items:center;gap:8px;}
 .badge-count{background:var(--danger-bg);border:1px solid #f5b7b1;color:var(--danger);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:600;}
-
 .word-map{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1.25rem;}
 .wm-dot{width:16px;height:16px;border-radius:4px;cursor:pointer;transition:transform .1s;}
 .wm-dot:hover{transform:scale(1.3);}
 .wm-0{background:#e74c3c;}.wm-1{background:#e67e22;}.wm-2{background:#f1c40f;}.wm-3{background:#2ecc71;}.wm-4{background:#27ae60;}
-
 .due-list{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem;}
 .due-item{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;box-shadow:var(--sh);}
 .due-item:hover{border-color:var(--border2);}
@@ -128,32 +123,54 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .pm-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:3px;}
 .pm-desc{font-size:11px;color:var(--muted);line-height:1.4;}
 .direction-row{display:flex;align-items:center;gap:8px;padding:.75rem 0;flex-wrap:wrap;}
-.dir-label{font-size:12px;color:var(--muted);font-weight:500;}
+.dir-label{font-size:13px;color:var(--txt2);font-weight:500;}
 
 /* WORDS TAB */
 .add-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh);}
 .add-fields{display:flex;flex-direction:column;gap:8px;margin-bottom:10px;}
+
+/* Multiple translations input */
+.translations-wrap{display:flex;flex-direction:column;gap:6px;}
+.trans-row{display:flex;gap:6px;align-items:center;}
+.trans-row input{flex:1;}
+.trans-add{font-size:12px;color:var(--acc);cursor:pointer;font-weight:500;padding:4px 0;}
+.trans-add:hover{text-decoration:underline;}
+
 .import-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh);}
 .import-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
-.filter-row{display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;}
-.filter-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border2);background:var(--card);color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
+
+/* Search & filter toolbar */
+.words-toolbar{display:flex;flex-direction:column;gap:8px;margin-bottom:.75rem;}
+.search-row{position:relative;}
+.search-row input{padding-left:36px;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;}
+.filter-sort-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.filter-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border2);background:var(--card);color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
 .filter-btn:hover{color:var(--txt);}
 .filter-btn.active{background:var(--acc-bg);border-color:var(--acc);color:var(--acc);}
+.sort-btn{padding:6px 10px;border-radius:20px;border:1.5px solid var(--border2);background:var(--card);color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:4px;margin-left:auto;}
+.sort-btn:hover{color:var(--txt);}
+.sort-btn.active{background:var(--acc-bg);border-color:var(--acc);color:var(--acc);}
 
-/* Bulk actions bar */
-.bulk-bar{display:none;align-items:center;gap:8px;padding:.75rem 0;flex-wrap:wrap;}
-.bulk-bar.visible{display:flex;}
-.bulk-info{font-size:13px;color:var(--txt2);font-weight:500;flex:1;}
+/* Word actions toolbar */
+.words-actions{display:flex;align-items:center;gap:6px;margin-bottom:.75rem;flex-wrap:wrap;}
+.words-actions-left{display:flex;gap:6px;align-items:center;}
+.words-actions-right{display:flex;gap:6px;align-items:center;margin-left:auto;}
+.selected-info{font-size:12px;color:var(--acc);font-weight:600;padding:4px 8px;background:var(--acc-bg);border-radius:8px;display:none;}
+.selected-info.visible{display:block;}
 
 .wlist{display:flex;flex-direction:column;gap:4px;}
-.wi{display:flex;align-items:center;gap:8px;padding:11px 13px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;box-shadow:var(--sh);}
+.wi{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;box-shadow:var(--sh);}
 .wi:hover{border-color:var(--border2);}
 .wi.selected{border-color:var(--acc);background:var(--acc-bg);}
-.wi-check{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s;}
+.wi-check{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s;color:transparent;}
 .wi.selected .wi-check{background:var(--acc);border-color:var(--acc);color:#fff;}
-.we{font-size:13px;font-weight:600;flex:1;color:var(--txt);}
+.wi-content{flex:1;min-width:0;}
+.we{font-size:13px;font-weight:600;color:var(--txt);}
 .wtr{font-size:11px;color:var(--muted);}
-.wr{font-size:13px;color:var(--txt2);flex:1;}
+.wr{font-size:12px;color:var(--txt2);margin-top:2px;}
+/* Multiple translations display */
+.trans-pill{display:inline-block;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--txt2);margin:2px 2px 0 0;}
 .badge{font-size:10px;padding:3px 8px;border-radius:6px;letter-spacing:.03em;font-weight:600;flex-shrink:0;}
 .b-new{background:var(--danger-bg);color:var(--danger);}
 .b-learn{background:var(--warn-bg);color:var(--warn);}
@@ -163,15 +180,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 /* SETTINGS */
 .settings-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh);}
-.settings-title{font-size:12px;color:var(--muted);letter-spacing:.07em;text-transform:uppercase;font-weight:600;margin-bottom:1rem;}
+.settings-title{font-size:13px;color:var(--txt);font-weight:600;margin-bottom:1rem;}
 .setting-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:.75rem 0;border-bottom:1px solid var(--border);}
 .setting-row:last-child{border-bottom:none;padding-bottom:0;}
 .setting-label{font-size:14px;font-weight:500;color:var(--txt);}
 .setting-desc{font-size:11px;color:var(--muted);margin-top:2px;}
-.setting-control{flex-shrink:0;}
 .setting-control input[type=number]{width:80px;text-align:center;padding:8px 10px;}
-.setting-control select{width:140px;padding:8px 10px;}
-/* Toggle switch */
 .toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
 .toggle input{opacity:0;width:0;height:0;}
 .toggle-slider{position:absolute;inset:0;background:var(--border2);border-radius:12px;cursor:pointer;transition:.2s;}
@@ -179,7 +193,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .toggle input:checked + .toggle-slider{background:var(--acc);}
 .toggle input:checked + .toggle-slider:before{transform:translateX(20px);}
 
-/* SESSION OVERLAY */
+/* SESSION */
 .overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;overflow-y:auto;}
 .overlay.active{display:flex;}
 .session-header{display:flex;align-items:center;gap:12px;padding:1rem 1.25rem;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:var(--sh);}
@@ -197,7 +211,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .fc-word{font-family:'Playfair Display',serif;font-size:48px;color:var(--txt);line-height:1.1;}
 .fc-transcription{font-size:13px;color:var(--muted);}
 .fc-hint{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
-.fc-answer{font-size:24px;color:var(--acc);font-weight:600;}
+.fc-answer{font-size:22px;color:var(--acc);font-weight:600;}
+.fc-answer-pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px;}
+.fc-answer-pill{background:var(--acc-bg);border:1px solid var(--acc-light);border-radius:20px;padding:4px 12px;font-size:15px;color:var(--acc);font-weight:500;}
 .rate-row{display:flex;gap:8px;}
 .rate-row .btn{flex:1;padding:13px 8px;}
 
@@ -227,7 +243,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .hint-link:hover{text-decoration:underline;}
 
 /* MATCH */
-.match-hint{font-size:12px;color:var(--muted);margin-bottom:1rem;font-weight:500;}
 .match-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
 .match-col{display:flex;flex-direction:column;gap:6px;}
 .m-btn{padding:12px 11px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-align:left;color:var(--txt);transition:all .15s;line-height:1.3;box-shadow:var(--sh);}
@@ -235,8 +250,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .m-btn.m-sel{border-color:var(--acc);background:var(--acc-bg);color:var(--acc);}
 .m-btn.m-ok{border-color:var(--good);background:var(--good-bg);color:var(--good);cursor:default;opacity:.7;}
 .m-btn.m-err{border-color:var(--danger);background:var(--danger-bg);color:var(--danger);}
-.match-msg{font-size:12px;color:var(--muted);min-height:18px;font-weight:500;}
-.match-timer{font-size:13px;color:var(--warn);font-weight:700;}
+.match-msg{font-size:12px;color:var(--muted);min-height:18px;font-weight:500;margin-bottom:8px;}
+.match-timer-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;}
+.match-hint{font-size:12px;color:var(--muted);font-weight:500;}
+.match-timer{font-size:14px;color:var(--warn);font-weight:700;}
 
 /* RESULT */
 .result{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem 1rem;}
@@ -255,29 +272,35 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .overlay.modal-mode{background:rgba(0,0,0,.4);align-items:center;justify-content:center;}
 .modal-card{background:var(--card);border-radius:var(--r-xl);width:calc(100% - 2rem);max-width:420px;box-shadow:var(--sh-md);overflow:hidden;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);}
-.modal-title{font-size:12px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;}
+.modal-title{font-size:13px;color:var(--txt);font-weight:600;}
 .modal-body-pad{padding:1.25rem;}
 .modal-word{font-family:'Playfair Display',serif;font-size:36px;margin-bottom:4px;}
 .modal-tr{font-size:13px;color:var(--muted);margin-bottom:10px;}
-.modal-ru{font-size:18px;color:var(--acc);font-weight:600;margin-bottom:1rem;}
+.modal-translations{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
+.modal-trans-pill{background:var(--acc-bg);border:1px solid var(--acc-light);border-radius:20px;padding:5px 12px;font-size:14px;color:var(--acc);font-weight:500;}
 .modal-meta{font-size:12px;color:var(--muted);margin-bottom:5px;}
 .modal-score-bar{height:6px;background:var(--border);border-radius:3px;margin:8px 0 1rem;}
 .modal-score-fill{height:6px;border-radius:3px;background:var(--acc);}
 .modal-actions{padding:0 1.25rem 1.25rem;display:flex;flex-direction:column;gap:8px;}
 
-/* TOAST NOTIFICATION */
+/* TOAST */
 .toast-wrap{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:500;width:calc(100% - 2rem);max-width:400px;pointer-events:none;}
 .toast{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1rem 1.25rem;box-shadow:var(--sh-md);pointer-events:all;animation:toastIn .25s ease;}
 .toast.success{border-color:var(--good);background:var(--good-bg);}
 .toast.error{border-color:var(--danger);background:var(--danger-bg);}
+.toast.info{border-color:var(--acc-light);background:var(--acc-bg);}
 @keyframes toastIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
-.toast-title{font-size:14px;font-weight:600;margin-bottom:6px;}
+.toast-title{font-size:14px;font-weight:600;margin-bottom:6px;color:var(--txt);}
 .toast-pbar-wrap{height:6px;background:rgba(0,0,0,.08);border-radius:3px;margin-bottom:10px;}
-.toast-pbar{height:6px;background:var(--acc);border-radius:3px;transition:width .2s;}
+.toast-pbar{height:6px;background:var(--acc);border-radius:3px;transition:width .15s;}
 .toast-msg{font-size:13px;color:var(--txt2);margin-bottom:12px;}
 .toast-actions{display:flex;gap:8px;justify-content:flex-end;}
 
-/* CONFIRM DIALOG */
+/* SNACK (small bottom notification) */
+.snack{position:fixed;bottom:calc(var(--nh) + 12px);left:50%;transform:translateX(-50%);z-index:400;background:var(--txt);color:#fff;border-radius:20px;padding:8px 18px;font-size:13px;font-weight:500;white-space:nowrap;box-shadow:var(--sh-md);animation:snackIn .2s ease;pointer-events:none;}
+@keyframes snackIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+
+/* CONFIRM */
 .confirm-overlay{position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.4);display:none;align-items:center;justify-content:center;}
 .confirm-overlay.active{display:flex;}
 .confirm-card{background:var(--card);border-radius:var(--r-xl);padding:1.5rem;width:calc(100% - 2rem);max-width:340px;box-shadow:var(--sh-md);}
@@ -297,14 +320,14 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <div id="screen-auth" class="screen active">
   <div class="auth-wrap">
     <div class="auth-logo"><span class="logotype">lexis</span><div class="logo-dot"></div></div>
-    <p class="auth-tagline">семейный словарь</p>
+    <p class="auth-tagline">Семейный словарь</p>
     <div class="auth-card">
-      <div class="field-group"><label>имя</label><input id="auth-name" type="text" placeholder="например: Алексей" maxlength="30"/></div>
-      <div class="field-group"><label>пароль</label><input id="auth-pass" type="password" placeholder="минимум 4 символа"/></div>
+      <div class="field-group"><label>Имя</label><input id="auth-name" type="text" placeholder="например: Алексей" maxlength="30"/></div>
+      <div class="field-group"><label>Пароль</label><input id="auth-pass" type="password" placeholder="Минимум 4 символа"/></div>
       <div id="auth-error" class="error-msg"></div>
-      <button class="btn solid full" id="auth-btn" onclick="authLogin()">войти / создать аккаунт</button>
+      <button class="btn solid full" id="auth-btn" onclick="authLogin()">Войти / создать аккаунт</button>
     </div>
-    <p class="auth-hint">если аккаунта нет — он создастся автоматически</p>
+    <p class="auth-hint">Если аккаунта нет — он создастся автоматически</p>
   </div>
 </div>
 
@@ -315,15 +338,15 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="header-meta">
       <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
       <span id="header-username" class="header-username"></span>
-      <button class="icon-btn" onclick="logout()">⎋</button>
+      <button class="icon-btn" onclick="logout()" title="Выйти">⎋</button>
     </div>
   </header>
 
   <nav class="bottom-nav">
-    <button class="bnav active" onclick="switchTab('dashboard',this)"><span class="bnav-icon">⌂</span><span>главная</span></button>
-    <button class="bnav" onclick="switchTab('practice',this)"><span class="bnav-icon">▷</span><span>практика</span></button>
-    <button class="bnav" onclick="switchTab('words',this)"><span class="bnav-icon">☰</span><span>слова</span></button>
-    <button class="bnav" onclick="switchTab('settings',this)"><span class="bnav-icon">⚙</span><span>настройки</span></button>
+    <button class="bnav active" onclick="switchTab('dashboard',this)"><span class="bnav-icon">⌂</span><span>Главная</span></button>
+    <button class="bnav" onclick="switchTab('practice',this)"><span class="bnav-icon">▷</span><span>Практика</span></button>
+    <button class="bnav" onclick="switchTab('words',this)"><span class="bnav-icon">☰</span><span>Слова</span></button>
+    <button class="bnav" onclick="switchTab('settings',this)"><span class="bnav-icon">⚙</span><span>Настройки</span></button>
   </nav>
 
   <!-- DASHBOARD -->
@@ -331,7 +354,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="goal-card">
       <div class="goal-top">
         <div>
-          <div class="goal-label">дневная цель</div>
+          <div class="goal-label">Дневная цель</div>
           <div class="goal-numbers"><span id="goal-done">0</span><span class="goal-sep">/</span><span id="goal-total">10</span></div>
         </div>
         <div class="goal-ring-wrap">
@@ -343,35 +366,35 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         </div>
       </div>
       <button class="btn-study" onclick="startSmartSession()">
-        <span>учить сейчас</span>
+        <span>Учить сейчас</span>
         <span class="btn-study-count" id="study-badge"></span>
       </button>
     </div>
     <div class="stats-row">
-      <div class="stat-pill"><span class="sp-n" id="d-total">0</span><span class="sp-l">всего</span></div>
-      <div class="stat-pill"><span class="sp-n danger" id="d-new">0</span><span class="sp-l">новых</span></div>
-      <div class="stat-pill"><span class="sp-n warn" id="d-learn">0</span><span class="sp-l">учу</span></div>
-      <div class="stat-pill"><span class="sp-n good" id="d-know">0</span><span class="sp-l">знаю</span></div>
+      <div class="stat-pill"><span class="sp-n" id="d-total">0</span><span class="sp-l">Всего</span></div>
+      <div class="stat-pill"><span class="sp-n danger" id="d-new">0</span><span class="sp-l">Новых</span></div>
+      <div class="stat-pill"><span class="sp-n warn" id="d-learn">0</span><span class="sp-l">Учу</span></div>
+      <div class="stat-pill"><span class="sp-n good" id="d-know">0</span><span class="sp-l">Знаю</span></div>
     </div>
-    <div class="section-header">карта слов</div>
+    <div class="section-header">Карта слов</div>
     <div id="word-map" class="word-map"></div>
-    <div class="section-header">пора повторить <span id="due-count" class="badge-count"></span></div>
+    <div class="section-header">Пора повторить <span id="due-count" class="badge-count"></span></div>
     <div id="due-list" class="due-list"></div>
   </div>
 
   <!-- PRACTICE -->
   <div id="tab-practice" class="tab-content">
     <div class="practice-modes">
-      <div class="pm-card" onclick="startSession('flashcard')"><div class="pm-icon">🃏</div><div class="pm-title">карточки</div><div class="pm-desc">переворачивай и оценивай</div></div>
-      <div class="pm-card" onclick="startSession('choice')"><div class="pm-icon">🎯</div><div class="pm-title">выбор ответа</div><div class="pm-desc">4 варианта, выбери верный</div></div>
-      <div class="pm-card" onclick="startSession('typing')"><div class="pm-icon">⌨️</div><div class="pm-title">написать</div><div class="pm-desc">введи перевод вручную</div></div>
-      <div class="pm-card" onclick="startSession('match')"><div class="pm-icon">🔗</div><div class="pm-title">пары</div><div class="pm-desc">соедини слова с переводом</div></div>
+      <div class="pm-card" onclick="startSession('flashcard')"><div class="pm-icon">🃏</div><div class="pm-title">Карточки</div><div class="pm-desc">Переворачивай и оценивай</div></div>
+      <div class="pm-card" onclick="startSession('choice')"><div class="pm-icon">🎯</div><div class="pm-title">Выбор ответа</div><div class="pm-desc">4 варианта, выбери верный</div></div>
+      <div class="pm-card" onclick="startSession('typing')"><div class="pm-icon">⌨️</div><div class="pm-title">Написать</div><div class="pm-desc">Введи перевод вручную</div></div>
+      <div class="pm-card" onclick="startSession('match')"><div class="pm-icon">🔗</div><div class="pm-title">Пары</div><div class="pm-desc">Соедини слова с переводом</div></div>
     </div>
     <div class="direction-row">
-      <span class="dir-label">направление:</span>
+      <span class="dir-label">Направление:</span>
       <button class="pill active" id="dir-en" onclick="setDir('en')">EN → RU</button>
       <button class="pill" id="dir-ru" onclick="setDir('ru')">RU → EN</button>
-      <button class="pill" id="dir-mix" onclick="setDir('mix')">случайное</button>
+      <button class="pill" id="dir-mix" onclick="setDir('mix')">Случайное</button>
     </div>
   </div>
 
@@ -379,77 +402,97 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div id="tab-words" class="tab-content">
     <div class="add-section">
       <div class="add-fields">
-        <input id="inp-en" type="text" placeholder="english word" onkeydown="if(event.key==='Enter')document.getElementById('inp-ru').focus()"/>
-        <input id="inp-ru" type="text" placeholder="перевод" onkeydown="if(event.key==='Enter')document.getElementById('inp-tr').focus()"/>
-        <input id="inp-tr" type="text" placeholder="транскрипция (опционально)" onkeydown="if(event.key==='Enter')addWord()"/>
+        <input id="inp-en" type="text" placeholder="English word" onkeydown="if(event.key==='Enter')document.querySelector('#trans-rows .trans-row input').focus()"/>
+        <div class="field-group">
+          <label style="font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:500;">Переводы</label>
+          <div id="trans-rows" class="translations-wrap">
+            <div class="trans-row">
+              <input type="text" placeholder="Перевод 1" onkeydown="handleTransKey(event,0)"/>
+              <button class="icon-btn" onclick="removeTrans(0)" style="opacity:.5" title="Удалить">×</button>
+            </div>
+          </div>
+          <span class="trans-add" onclick="addTransRow()">+ Добавить перевод</span>
+        </div>
+        <input id="inp-tr" type="text" placeholder="Транскрипция (опционально)" onkeydown="if(event.key==='Enter')addWord()"/>
       </div>
-      <button class="btn solid full" onclick="addWord()">+ добавить слово</button>
+      <button class="btn solid full" onclick="addWord()">+ Добавить слово</button>
     </div>
+
     <div class="import-section">
-      <div class="import-label">быстрый импорт</div>
-      <textarea id="inp-import" placeholder="word — перевод&#10;another — другой&#10;example — пример"></textarea>
-      <div style="margin-top:10px"><button class="btn full" onclick="startImport()">импортировать список</button></div>
+      <div class="import-label">Быстрый импорт</div>
+      <textarea id="inp-import" placeholder="word — перевод&#10;another — другой&#10;example — пример1; пример2"></textarea>
+      <div style="margin-top:10px"><button class="btn full" onclick="startImport()">Импортировать список</button></div>
     </div>
-    <div class="filter-row">
-      <button class="filter-btn active" onclick="setFilter('all',this)">все</button>
-      <button class="filter-btn" onclick="setFilter('new',this)">новые</button>
-      <button class="filter-btn" onclick="setFilter('learning',this)">учу</button>
-      <button class="filter-btn" onclick="setFilter('know',this)">знаю</button>
+
+    <div class="words-toolbar">
+      <div class="search-row">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-inp" placeholder="Поиск по словарю..." oninput="renderList()"/>
+      </div>
+      <div class="filter-sort-row">
+        <button class="filter-btn active" onclick="setFilter('all',this)">Все</button>
+        <button class="filter-btn" onclick="setFilter('new',this)">Новые</button>
+        <button class="filter-btn" onclick="setFilter('learning',this)">Учу</button>
+        <button class="filter-btn" onclick="setFilter('know',this)">Знаю</button>
+        <button class="sort-btn" id="sort-btn" onclick="toggleSort()">А→Я ↕</button>
+      </div>
     </div>
-    <!-- Bulk actions -->
-    <div class="bulk-bar" id="bulk-bar">
-      <span class="bulk-info" id="bulk-info">0 выбрано</span>
-      <button class="btn sm danger-btn" onclick="deleteSelected()">удалить</button>
-      <button class="btn sm" onclick="clearSelection()">отмена</button>
+
+    <div class="words-actions">
+      <div class="words-actions-left">
+        <button class="btn sm" onclick="toggleSelectAll()">Выбрать все</button>
+        <span class="selected-info" id="sel-info"></span>
+        <button class="btn sm danger-btn" id="del-sel-btn" style="display:none" onclick="deleteSelected()">🗑 Удалить</button>
+      </div>
+      <div class="words-actions-right">
+        <button class="btn sm danger-btn" onclick="confirmClearAll()">Очистить всё</button>
+      </div>
     </div>
-    <div style="display:flex;gap:8px;margin-bottom:.75rem;">
-      <button class="btn sm full" onclick="toggleSelectAll()" id="select-all-btn">выбрать все</button>
-      <button class="btn sm danger-btn" onclick="confirmClearAll()">очистить всё</button>
-    </div>
+
     <div id="wlist" class="wlist"></div>
   </div>
 
   <!-- SETTINGS -->
   <div id="tab-settings" class="tab-content">
     <div class="settings-section">
-      <div class="settings-title">цели и прогресс</div>
+      <div class="settings-title">Цели и прогресс</div>
       <div class="setting-row">
-        <div><div class="setting-label">дневная цель</div><div class="setting-desc">слов в день</div></div>
+        <div><div class="setting-label">Дневная цель</div><div class="setting-desc">Слов в день</div></div>
         <div class="setting-control"><input type="number" id="set-daily-goal" min="1" max="100" value="10" onchange="saveSetting('daily_goal',+this.value)"/></div>
       </div>
     </div>
     <div class="settings-section">
-      <div class="settings-title">размер сессии</div>
+      <div class="settings-title">Размер сессии</div>
       <div class="setting-row">
-        <div><div class="setting-label">карточки</div><div class="setting-desc">слов за сессию</div></div>
+        <div><div class="setting-label">Карточки</div><div class="setting-desc">Слов за сессию</div></div>
         <div class="setting-control"><input type="number" id="set-fc-size" min="3" max="50" value="10" onchange="saveSetting('fc_size',+this.value)"/></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">выбор ответа</div><div class="setting-desc">вопросов за сессию</div></div>
+        <div><div class="setting-label">Выбор ответа</div><div class="setting-desc">Вопросов за сессию</div></div>
         <div class="setting-control"><input type="number" id="set-ch-size" min="3" max="50" value="10" onchange="saveSetting('ch_size',+this.value)"/></div>
       </div>
       <div class="setting-row">
-        <div><div class="setting-label">написать</div><div class="setting-desc">слов за сессию</div></div>
+        <div><div class="setting-label">Написать</div><div class="setting-desc">Слов за сессию</div></div>
         <div class="setting-control"><input type="number" id="set-ty-size" min="3" max="50" value="10" onchange="saveSetting('ty_size',+this.value)"/></div>
       </div>
     </div>
     <div class="settings-section">
-      <div class="settings-title">режим на время</div>
+      <div class="settings-title">Режим на время</div>
       <div class="setting-row">
-        <div><div class="setting-label">включить таймер</div><div class="setting-desc">ограничение времени на вопрос</div></div>
+        <div><div class="setting-label">Включить таймер</div><div class="setting-desc">Ограничение времени на вопрос</div></div>
         <div class="setting-control">
           <label class="toggle"><input type="checkbox" id="set-timer-on" onchange="saveSetting('timer_on',this.checked)"/><span class="toggle-slider"></span></label>
         </div>
       </div>
       <div class="setting-row" id="timer-seconds-row">
-        <div><div class="setting-label">секунд на вопрос</div><div class="setting-desc">для режимов «написать» и «выбор»</div></div>
+        <div><div class="setting-label">Секунд на вопрос</div><div class="setting-desc">Для режимов «Написать» и «Выбор»</div></div>
         <div class="setting-control"><input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/></div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- SESSION OVERLAY -->
+<!-- SESSION -->
 <div id="session-overlay" class="overlay">
   <div class="session-header">
     <button class="icon-btn" onclick="closeSession()">✕</button>
@@ -463,20 +506,18 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div id="sbody" class="session-body"></div>
 </div>
 
-<!-- WORD MODAL (view/edit) -->
+<!-- WORD MODAL -->
 <div id="word-modal" class="overlay modal-mode">
   <div class="modal-card">
     <div class="modal-header">
-      <span class="modal-title">слово</span>
+      <span class="modal-title">Слово</span>
       <div style="display:flex;gap:6px">
-        <button class="icon-btn" id="modal-edit-btn" onclick="toggleEditMode()" title="редактировать">✏️</button>
+        <button class="icon-btn" id="modal-edit-btn" onclick="toggleEditMode()" title="Редактировать">✏️</button>
         <button class="icon-btn" onclick="closeWordModal()">✕</button>
       </div>
     </div>
     <div id="modal-body" class="modal-body-pad"></div>
-    <div class="modal-actions" id="modal-actions">
-      <button class="btn danger-btn full" id="modal-del">удалить слово</button>
-    </div>
+    <div class="modal-actions" id="modal-actions"></div>
   </div>
 </div>
 
@@ -489,78 +530,45 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="confirm-title" id="confirm-title">Подтвердите</div>
     <div class="confirm-msg" id="confirm-msg"></div>
     <div class="confirm-actions">
-      <button class="btn" onclick="confirmCancel()">отмена</button>
-      <button class="btn danger-btn" id="confirm-ok-btn" onclick="confirmOk()">подтвердить</button>
+      <button class="btn" onclick="confirmCancel()">Отмена</button>
+      <button class="btn danger-btn" onclick="confirmOk()">Подтвердить</button>
     </div>
   </div>
 </div>
 
 <script>
 // ── STATE ─────────────────────────────────────
-let CU=null, words=[], wF='all', dir='en';
-let sM=null, sW=[], sI=0, sS=0, sMist=[];
-let fcR=false, chA=false, mSt={}, mTmr=null, mSec=0, dDone=0;
-let sessionTimerInterval=null, sessionTimeLeft=0;
+let CU=null,words=[],wF='all',dir='en',sortAZ=false;
+let sM=null,sW=[],sI=0,sS=0,sMist=[];
+let fcR=false,chA=false,mSt={},mTmr=null,mSec=0,dDone=0;
+let sessionTimerInterval=null,sessionTimeLeft=0;
 let selectedWords=new Set();
-let editingWordId=null;
+let currentModalWordId=null,inEditMode=false;
 let confirmCallback=null;
 let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:30};
 
 // ── TELEGRAM ──────────────────────────────────
-window.Telegram?.WebApp?.ready();
-window.Telegram?.WebApp?.expand();
-(async()=>{
-  const tg=window.Telegram?.WebApp;
-  if(tg?.initDataUnsafe?.user?.username){
-    const n=tg.initDataUnsafe.user.username;
-    try{let u=await gU(n)||await cU(n,await hp(n+'_tg'));if(u)await lok(u);}catch(ex){}
-  }
-})();
+window.Telegram?.WebApp?.ready();window.Telegram?.WebApp?.expand();
+(async()=>{const tg=window.Telegram?.WebApp;if(tg?.initDataUnsafe?.user?.username){const n=tg.initDataUnsafe.user.username;try{let u=await gU(n)||await cU(n,await hp(n+'_tg'));if(u)await lok(u);}catch(ex){}}})();
 
 // ── AUTH ──────────────────────────────────────
 async function authLogin(){
-  const name=document.getElementById('auth-name').value.trim();
-  const pass=document.getElementById('auth-pass').value.trim();
-  const err=document.getElementById('auth-error');
-  err.textContent='';
-  if(!name||!pass){err.textContent='заполни все поля';return;}
-  if(pass.length<4){err.textContent='пароль минимум 4 символа';return;}
-  const btn=document.getElementById('auth-btn');btn.textContent='загрузка...';btn.disabled=true;
-  try{
-    const ph=await hp(pass);
-    let u=await gU(name);
-    if(!u) u=await cU(name,ph);
-    else if(u.pass_hash!==ph){err.textContent='неверный пароль';btn.textContent='войти / создать аккаунт';btn.disabled=false;return;}
-    await lok(u);
-  }catch(ex){err.textContent='ошибка: '+ex.message;btn.textContent='войти / создать аккаунт';btn.disabled=false;}
+  const name=document.getElementById('auth-name').value.trim(),pass=document.getElementById('auth-pass').value.trim(),err=document.getElementById('auth-error');
+  err.textContent='';if(!name||!pass){err.textContent='Заполни все поля';return;}if(pass.length<4){err.textContent='Пароль минимум 4 символа';return;}
+  const btn=document.getElementById('auth-btn');btn.textContent='Загрузка...';btn.disabled=true;
+  try{const ph=await hp(pass);let u=await gU(name);if(!u)u=await cU(name,ph);else if(u.pass_hash!==ph){err.textContent='Неверный пароль';btn.textContent='Войти / создать аккаунт';btn.disabled=false;return;}await lok(u);}
+  catch(ex){err.textContent='Ошибка: '+ex.message;btn.textContent='Войти / создать аккаунт';btn.disabled=false;}
 }
-
 async function lok(u){
   CU=u;localStorage.setItem('lx',JSON.stringify(u));
   document.getElementById('header-username').textContent=u.name;
   document.getElementById('screen-auth').classList.remove('active');
   document.getElementById('screen-app').classList.add('active');
-  loadSettings();
-  await loadWords();
-  updStr();
+  loadSettings();await loadWords();updStr();
 }
-
-function logout(){
-  CU=null;words=[];dDone=0;selectedWords.clear();
-  localStorage.removeItem('lx');
-  document.getElementById('screen-app').classList.remove('active');
-  document.getElementById('screen-auth').classList.add('active');
-  document.getElementById('auth-name').value='';
-  document.getElementById('auth-pass').value='';
-}
-
+function logout(){CU=null;words=[];dDone=0;selectedWords.clear();localStorage.removeItem('lx');document.getElementById('screen-app').classList.remove('active');document.getElementById('screen-auth').classList.add('active');document.getElementById('auth-name').value='';document.getElementById('auth-pass').value='';}
 document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='Enter')authLogin();});
-
-(async()=>{
-  const s=localStorage.getItem('lx');if(!s)return;
-  try{const u=JSON.parse(s),f=await gU(u.name);if(f&&f.pass_hash===u.pass_hash)await lok(f);else localStorage.removeItem('lx');}
-  catch(ex){localStorage.removeItem('lx');}
-})();
+(async()=>{const s=localStorage.getItem('lx');if(!s)return;try{const u=JSON.parse(s),f=await gU(u.name);if(f&&f.pass_hash===u.pass_hash)await lok(f);else localStorage.removeItem('lx');}catch(ex){localStorage.removeItem('lx');}})();
 
 // ── SETTINGS ──────────────────────────────────
 function loadSettings(){
@@ -573,337 +581,310 @@ function loadSettings(){
   document.getElementById('set-timer-sec').value=settings.timer_sec;
   document.getElementById('timer-seconds-row').style.display=settings.timer_on?'flex':'none';
 }
-
 function saveSetting(key,val){
   settings[key]=val;
-  if(key==='timer_on') document.getElementById('timer-seconds-row').style.display=val?'flex':'none';
-  uU(CU.id,{settings:JSON.stringify(settings)});
-  localStorage.setItem('lx',JSON.stringify({...CU,settings:JSON.stringify(settings)}));
-  renderDash();
+  if(key==='timer_on')document.getElementById('timer-seconds-row').style.display=val?'flex':'none';
+  uU(CU.id,{settings:JSON.stringify(settings)});renderDash();
 }
 
 // ── STREAK ────────────────────────────────────
 function updStr(){
-  if(!CU)return;
-  const s=calcStreak(CU);
-  document.getElementById('streak-count').textContent=s.streak;
-  if(s.last_practice!==CU.last_practice){
-    CU.streak=s.streak;CU.last_practice=s.last_practice;
-    uU(CU.id,{streak:s.streak,last_practice:s.last_practice});
-    localStorage.setItem('lx',JSON.stringify(CU));
+  if(!CU)return;const s=calcStreak(CU);document.getElementById('streak-count').textContent=s.streak;
+  if(s.last_practice!==CU.last_practice){CU.streak=s.streak;CU.last_practice=s.last_practice;uU(CU.id,{streak:s.streak,last_practice:s.last_practice});localStorage.setItem('lx',JSON.stringify(CU));}
+}
+
+// ── TRANSLATIONS helpers ──────────────────────
+function getTranslations(){
+  return [...document.querySelectorAll('#trans-rows .trans-row input')].map(i=>i.value.trim()).filter(Boolean);
+}
+function addTransRow(){
+  const rows=document.getElementById('trans-rows');
+  const idx=rows.children.length;
+  const div=document.createElement('div');div.className='trans-row';
+  div.innerHTML=`<input type="text" placeholder="Перевод ${idx+1}" onkeydown="handleTransKey(event,${idx})"/><button class="icon-btn" onclick="removeTrans(${idx})" style="opacity:.5" title="Удалить">×</button>`;
+  rows.appendChild(div);
+  div.querySelector('input').focus();
+}
+function removeTrans(idx){
+  const rows=document.getElementById('trans-rows');
+  if(rows.children.length<=1)return;
+  rows.children[idx].remove();
+  // reindex
+  [...rows.querySelectorAll('.trans-row input')].forEach((inp,i)=>{inp.placeholder='Перевод '+(i+1);inp.onkeydown=ev=>handleTransKey(ev,i);});
+  [...rows.querySelectorAll('.trans-row button')].forEach((btn,i)=>{btn.onclick=()=>removeTrans(i);});
+}
+function handleTransKey(e,idx){
+  if(e.key==='Enter'){
+    const rows=document.getElementById('trans-rows');
+    if(idx===rows.children.length-1)addTransRow();
+    else rows.children[idx+1].querySelector('input').focus();
   }
+}
+// Parse semicolon-separated translations from a string
+function parseTranslations(str){return str.split(/[;,]/).map(s=>s.trim()).filter(Boolean);}
+// Get primary translation for display / matching
+function getPrimary(w){const t=getWordTranslations(w);return t[0]||'';}
+function getWordTranslations(w){
+  if(w.translations&&Array.isArray(w.translations)&&w.translations.length)return w.translations;
+  if(typeof w.translations==='string'&&w.translations)return parseTranslations(w.translations);
+  return parseTranslations(w.ru||'');
 }
 
 // ── WORDS ─────────────────────────────────────
 async function loadWords(){
-  document.getElementById('wlist').innerHTML='<div class="loading">загрузка...</div>';
+  document.getElementById('wlist').innerHTML='<div class="loading">Загрузка...</div>';
   try{words=await gW(CU.id)||[];renderDash();renderList();}
-  catch(ex){document.getElementById('wlist').innerHTML='<div class="empty">ошибка загрузки</div>';}
+  catch(ex){document.getElementById('wlist').innerHTML='<div class="empty">Ошибка загрузки</div>';}
 }
 
 async function addWord(){
   const en=document.getElementById('inp-en').value.trim();
-  const ru=document.getElementById('inp-ru').value.trim();
+  const trans=getTranslations();
   const tr=document.getElementById('inp-tr').value.trim();
-  if(!en||!ru)return;
+  if(!en||!trans.length){showSnack('Заполни слово и перевод');return;}
+  const ru=trans.join('; ');
   try{
     const w=await aW(CU.id,en,ru,tr);
     if(w){words.push(w);renderDash();renderList();}
-    ['inp-en','inp-ru','inp-tr'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('inp-en').value='';document.getElementById('inp-tr').value='';
+    document.getElementById('trans-rows').innerHTML=`<div class="trans-row"><input type="text" placeholder="Перевод 1" onkeydown="handleTransKey(event,0)"/><button class="icon-btn" onclick="removeTrans(0)" style="opacity:.5" title="Удалить">×</button></div>`;
     document.getElementById('inp-en').focus();
-  }catch(ex){showToast('error','Ошибка','Не удалось добавить слово: '+ex.message);}
+    showSnack('✓ Слово добавлено');
+  }catch(ex){showSnack('Ошибка: '+ex.message);}
 }
 
-// ── IMPORT WITH PROGRESS ──────────────────────
+// ── IMPORT ────────────────────────────────────
 async function startImport(){
   const raw=document.getElementById('inp-import').value.trim();
   if(!raw)return;
   const lines=raw.split('\n').filter(l=>l.includes('—')||l.includes('-')||l.includes('\t'));
   if(!lines.length){showToast('error','Ошибка','Ничего не распознано. Формат: слово — перевод');return;}
-
-  // parse all lines first
   const parsed=[];
   for(const line of lines){
     const sep=line.includes('—')?'—':line.includes('\t')?'\t':'-';
     const p=line.split(sep).map(s=>s.trim());
-    if(p.length>=2&&p[0]&&p[1]) parsed.push({en:p[0],ru:p[1]});
+    if(p.length>=2&&p[0]&&p[1])parsed.push({en:p[0],ru:p[1]});
   }
-  if(!parsed.length){showToast('error','Ошибка','Ничего не распознано. Формат: слово — перевод');return;}
-
-  // Show confirmation toast with progress
-  showImportToast(parsed);
-}
-
-function showImportToast(parsed){
-  const wrap=document.getElementById('toast-wrap');
-  wrap.style.display='block';
-  wrap.innerHTML=`<div class="toast" id="import-toast">
-    <div class="toast-title">Импорт слов</div>
-    <div class="toast-msg">Найдено <strong>${parsed.length}</strong> слов. Добавить их в словарь?</div>
-    <div class="toast-actions">
-      <button class="btn sm" onclick="cancelImport()">отмена</button>
-      <button class="btn sm solid" onclick="doImport(${JSON.stringify(parsed).split('').map(c=>c.charCodeAt(0)>127?encodeURIComponent(c):c).join('')})">добавить</button>
-    </div>
-  </div>`;
-  // store parsed globally
+  if(!parsed.length){showToast('error','Ошибка','Ничего не распознано');return;}
   window._importParsed=parsed;
-  wrap.innerHTML=`<div class="toast" id="import-toast">
-    <div class="toast-title">Импорт слов</div>
-    <div class="toast-msg">Найдено <strong>${parsed.length}</strong> слов. Добавить их в словарь?</div>
-    <div class="toast-actions">
-      <button class="btn sm" onclick="cancelImport()">отмена</button>
-      <button class="btn sm solid" onclick="doImport()">добавить</button>
-    </div>
-  </div>`;
+  const wrap=document.getElementById('toast-wrap');wrap.style.display='block';
+  wrap.innerHTML=`<div class="toast info"><div class="toast-title">Импорт слов</div><div class="toast-msg">Найдено <strong>${parsed.length}</strong> слов. Добавить их в словарь?</div><div class="toast-actions"><button class="btn sm" onclick="cancelImport()">Отмена</button><button class="btn sm solid" onclick="doImport()">Добавить</button></div></div>`;
 }
-
-function cancelImport(){
-  document.getElementById('toast-wrap').style.display='none';
-  window._importParsed=null;
-}
-
+function cancelImport(){document.getElementById('toast-wrap').style.display='none';window._importParsed=null;}
 async function doImport(){
-  const parsed=window._importParsed;
-  if(!parsed)return;
+  const parsed=window._importParsed;if(!parsed)return;
   const wrap=document.getElementById('toast-wrap');
-  // Show progress
-  wrap.innerHTML=`<div class="toast" id="import-toast">
-    <div class="toast-title">Загружаю слова...</div>
-    <div class="toast-pbar-wrap"><div class="toast-pbar" id="import-pbar" style="width:0%"></div></div>
-    <div class="toast-msg" id="import-status">0 / ${parsed.length}</div>
-  </div>`;
+  wrap.innerHTML=`<div class="toast"><div class="toast-title">Загружаю слова...</div><div class="toast-pbar-wrap"><div class="toast-pbar" id="imp-pb" style="width:0%"></div></div><div class="toast-msg" id="imp-st">0 / ${parsed.length}</div></div>`;
 
-  let added=0;
-  for(let i=0;i<parsed.length;i++){
-    try{
-      const w=await aW(CU.id,parsed[i].en,parsed[i].ru);
-      if(w){words.push(w);added++;}
-    }catch(ex){}
-    const pct=Math.round(((i+1)/parsed.length)*100);
-    const pb=document.getElementById('import-pbar');
-    const st=document.getElementById('import-status');
-    if(pb)pb.style.width=pct+'%';
-    if(st)st.textContent=(i+1)+' / '+parsed.length;
+  // Batch insert — send in chunks of 10 simultaneously for speed
+  const CHUNK=10;let added=0;
+  for(let i=0;i<parsed.length;i+=CHUNK){
+    const chunk=parsed.slice(i,Math.min(i+CHUNK,parsed.length));
+    const results=await Promise.allSettled(chunk.map(p=>aW(CU.id,p.en,p.ru)));
+    results.forEach(r=>{if(r.status==='fulfilled'&&r.value){words.push(r.value);added++;}});
+    const done=Math.min(i+CHUNK,parsed.length);
+    const pb=document.getElementById('imp-pb'),st=document.getElementById('imp-st');
+    if(pb)pb.style.width=Math.round((done/parsed.length)*100)+'%';
+    if(st)st.textContent=done+' / '+parsed.length;
   }
-
-  // Done — show result
-  wrap.innerHTML=`<div class="toast success" id="import-toast">
-    <div class="toast-title">✓ Готово!</div>
-    <div class="toast-msg">Добавлено <strong>${added}</strong> из ${parsed.length} слов</div>
-    <div class="toast-actions"><button class="btn sm solid" onclick="closeImportToast()">OK</button></div>
-  </div>`;
-
-  document.getElementById('inp-import').value='';
-  window._importParsed=null;
+  wrap.innerHTML=`<div class="toast success"><div class="toast-title">✓ Готово!</div><div class="toast-msg">Добавлено <strong>${added}</strong> из ${parsed.length} слов</div><div class="toast-actions"><button class="btn sm solid" onclick="closeToast()">OK</button></div></div>`;
+  document.getElementById('inp-import').value='';window._importParsed=null;
   renderDash();renderList();
 }
+function closeToast(){document.getElementById('toast-wrap').style.display='none';}
 
-function closeImportToast(){
-  document.getElementById('toast-wrap').style.display='none';
-}
+// ── DELETE with batch + progress ─────────────
+async function deleteWords(ids){
+  if(!ids.length)return;
+  const wrap=document.getElementById('toast-wrap');wrap.style.display='block';
+  wrap.innerHTML=`<div class="toast"><div class="toast-title">Удаляю слова...</div><div class="toast-pbar-wrap"><div class="toast-pbar" id="del-pb" style="width:0%"></div></div><div class="toast-msg" id="del-st">0 / ${ids.length}</div></div>`;
 
-// ── DELETE / SELECT ───────────────────────────
-function toggleWordSelect(id, e){
-  e.stopPropagation();
-  if(selectedWords.has(id)) selectedWords.delete(id);
-  else selectedWords.add(id);
-  renderList();
-  updateBulkBar();
-}
-
-function updateBulkBar(){
-  const bar=document.getElementById('bulk-bar');
-  const info=document.getElementById('bulk-info');
-  if(selectedWords.size>0){bar.classList.add('visible');info.textContent=selectedWords.size+' выбрано';}
-  else{bar.classList.remove('visible');}
-}
-
-function clearSelection(){selectedWords.clear();renderList();updateBulkBar();}
-
-function toggleSelectAll(){
-  const list=getFilt();
-  if(selectedWords.size===list.length){selectedWords.clear();}
-  else{list.forEach(w=>selectedWords.add(w.id));}
-  renderList();updateBulkBar();
-}
-
-async function deleteSelected(){
-  if(!selectedWords.size)return;
-  const ids=[...selectedWords];
-  showConfirm('Удалить слова?',`Будет удалено ${ids.length} слов. Это действие нельзя отменить.`,async()=>{
-    for(const id of ids){
-      try{await dW(id);}catch(ex){}
-    }
-    words=words.filter(w=>!ids.includes(w.id));
-    selectedWords.clear();
-    renderDash();renderList();updateBulkBar();
-  });
-}
-
-function confirmClearAll(){
-  showConfirm('Очистить весь словарь?','Все слова будут удалены безвозвратно. Прогресс обучения тоже исчезнет.',async()=>{
-    for(const w of words){try{await dW(w.id);}catch(ex){}}
-    words=[];selectedWords.clear();
-    renderDash();renderList();updateBulkBar();
-  });
+  // Batch delete in chunks of 20 simultaneously
+  const CHUNK=20;let deleted=0;
+  for(let i=0;i<ids.length;i+=CHUNK){
+    const chunk=ids.slice(i,Math.min(i+CHUNK,ids.length));
+    await Promise.allSettled(chunk.map(id=>dW(id)));
+    deleted+=chunk.length;
+    const pb=document.getElementById('del-pb'),st=document.getElementById('del-st');
+    if(pb)pb.style.width=Math.round((deleted/ids.length)*100)+'%';
+    if(st)st.textContent=deleted+' / '+ids.length;
+  }
+  words=words.filter(w=>!ids.includes(w.id));
+  selectedWords.clear();
+  wrap.innerHTML=`<div class="toast success"><div class="toast-title">✓ Удалено</div><div class="toast-msg">Удалено ${deleted} слов</div><div class="toast-actions"><button class="btn sm solid" onclick="closeToast()">OK</button></div></div>`;
+  renderDash();renderList();updateSelUI();
+  setTimeout(()=>{wrap.style.display='none';},2500);
 }
 
 async function deleteWord(id){
-  try{await dW(id);words=words.filter(w=>w.id!==id);renderDash();renderList();}
-  catch(ex){showToast('error','Ошибка','Не удалось удалить');}
+  try{await dW(id);words=words.filter(w=>w.id!==id);renderDash();renderList();showSnack('Слово удалено');}
+  catch(ex){showSnack('Ошибка удаления');}
 }
 
 async function upScore(id,d){
   const w=words.find(x=>x.id===id);if(!w)return;
-  const ns=Math.max(0,Math.min(6,(w.score||0)+d));
-  w.score=ns;w.last_reviewed=new Date().toISOString();
-  w.review_count=(w.review_count||0)+1;w.next_review=nxtR(ns);
+  const ns=Math.max(0,Math.min(6,(w.score||0)+d));w.score=ns;w.last_reviewed=new Date().toISOString();w.review_count=(w.review_count||0)+1;w.next_review=nxtR(ns);
   try{await upW(id,{score:ns,last_reviewed:w.last_reviewed,review_count:w.review_count,next_review:w.next_review});}catch(ex){}
 }
 
-function setFilter(f,btn){
-  wF=f;selectedWords.clear();
-  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');renderList();updateBulkBar();
+// ── SELECT / SORT / FILTER ────────────────────
+function setFilter(f,btn){wF=f;selectedWords.clear();document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderList();updateSelUI();}
+
+function toggleSort(){
+  sortAZ=!sortAZ;
+  document.getElementById('sort-btn').textContent=sortAZ?'Я→А ↕':'А→Я ↕';
+  document.getElementById('sort-btn').classList.toggle('active',sortAZ);
+  renderList();
 }
+
 function getFilt(){
-  if(wF==='new')return words.filter(w=>(w.score||0)===0);
-  if(wF==='learning')return words.filter(w=>(w.score||0)>0&&(w.score||0)<6);
-  if(wF==='know')return words.filter(w=>(w.score||0)>=6);
-  return words;
+  let list=[...words];
+  if(wF==='new')list=list.filter(w=>(w.score||0)===0);
+  else if(wF==='learning')list=list.filter(w=>(w.score||0)>0&&(w.score||0)<6);
+  else if(wF==='know')list=list.filter(w=>(w.score||0)>=6);
+  const q=(document.getElementById('search-inp')?.value||'').toLowerCase().trim();
+  if(q)list=list.filter(w=>w.en.toLowerCase().includes(q)||w.ru.toLowerCase().includes(q));
+  if(sortAZ)list.sort((a,b)=>a.en.localeCompare(b.en));
+  else if(sortAZ===false&&q===''){}// keep original order
+  return list;
+}
+
+function toggleWordSelect(id,ev){
+  ev.stopPropagation();
+  if(selectedWords.has(id))selectedWords.delete(id);else selectedWords.add(id);
+  renderList();updateSelUI();
+}
+function updateSelUI(){
+  const info=document.getElementById('sel-info'),btn=document.getElementById('del-sel-btn');
+  if(selectedWords.size>0){info.textContent=selectedWords.size+' выбрано';info.classList.add('visible');btn.style.display='inline-flex';}
+  else{info.classList.remove('visible');btn.style.display='none';}
+}
+function toggleSelectAll(){
+  const list=getFilt();
+  if(list.every(w=>selectedWords.has(w.id)))selectedWords.clear();
+  else list.forEach(w=>selectedWords.add(w.id));
+  renderList();updateSelUI();
+}
+async function deleteSelected(){
+  if(!selectedWords.size)return;
+  const ids=[...selectedWords];
+  showConfirm('Удалить слова?',`Будет удалено ${ids.length} слов. Это действие нельзя отменить.`,()=>deleteWords(ids));
+}
+function confirmClearAll(){
+  showConfirm('Очистить весь словарь?','Все слова будут удалены безвозвратно.',()=>deleteWords(words.map(w=>w.id)));
 }
 
 function renderList(){
   const el=document.getElementById('wlist'),list=getFilt();
-  const allSel=list.length>0&&list.every(w=>selectedWords.has(w.id));
-  document.getElementById('select-all-btn').textContent=allSel?'снять все':'выбрать все';
-  if(!list.length){el.innerHTML='<div class="empty">нет слов в этой категории</div>';return;}
+  if(!list.length){el.innerHTML='<div class="empty">Нет слов в этой категории</div>';return;}
   el.innerHTML=list.map(w=>{
-    const s=w.score||0;let c='b-new',l='new';
-    if(s>=6){c='b-know';l='know';}else if(s>=2){c='b-learn';l='learning';}
+    const s=w.score||0;let c='b-new',l='Новое';
+    if(s>=6){c='b-know';l='Знаю';}else if(s>=2){c='b-learn';l='Учу';}
     const sel=selectedWords.has(w.id);
+    const trans=getWordTranslations(w);
+    const transHtml=trans.length>1
+      ?`<div style="margin-top:4px">${trans.map(t=>`<span class="trans-pill">${e(t)}</span>`).join('')}</div>`
+      :`<div class="wr">${e(trans[0]||'')}</div>`;
     return`<div class="wi${sel?' selected':''}" onclick="openModal(${w.id})">
       <div class="wi-check" onclick="toggleWordSelect(${w.id},event)">${sel?'✓':''}</div>
-      <div style="flex:1;min-width:0"><span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}</div>
-      <span class="wr">${e(w.ru)}</span>
+      <div class="wi-content">
+        <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}
+        ${transHtml}
+      </div>
       <span class="badge ${c}">${l}</span>
     </div>`;
   }).join('');
 }
 
-// ── WORD MODAL (view + edit) ──────────────────
-let currentModalWordId=null;
-let inEditMode=false;
-
-function openModal(id){
-  currentModalWordId=id;inEditMode=false;
-  renderModalView(id);
-  document.getElementById('word-modal').classList.add('active');
-}
-
-function closeWordModal(){
-  document.getElementById('word-modal').classList.remove('active');
-  currentModalWordId=null;inEditMode=false;
-}
+// ── WORD MODAL ────────────────────────────────
+function openModal(id){currentModalWordId=id;inEditMode=false;renderModalView(id);document.getElementById('word-modal').classList.add('active');}
+function closeWordModal(){document.getElementById('word-modal').classList.remove('active');currentModalWordId=null;inEditMode=false;}
 
 function renderModalView(id){
   const w=words.find(x=>x.id===id);if(!w)return;
-  const s=w.score||0,pct=Math.round((s/6)*100);
-  const rev=w.last_reviewed?new Date(w.last_reviewed).toLocaleDateString('ru-RU'):'никогда';
+  const s=w.score||0,pct=Math.round((s/6)*100),rev=w.last_reviewed?new Date(w.last_reviewed).toLocaleDateString('ru-RU'):'никогда';
+  const trans=getWordTranslations(w);
   document.getElementById('modal-body').innerHTML=`
     <div class="modal-word">${e(w.en)}</div>
     ${w.transcription?`<div class="modal-tr">[${e(w.transcription)}]</div>`:''}
-    <div class="modal-ru">${e(w.ru)}</div>
-    <div class="modal-meta">повторений: ${w.review_count||0} · последний раз: ${rev}</div>
+    <div class="modal-translations">${trans.map(t=>`<span class="modal-trans-pill">${e(t)}</span>`).join('')}</div>
+    <div class="modal-meta">Повторений: ${w.review_count||0} · Последний раз: ${rev}</div>
     <div class="modal-score-bar"><div class="modal-score-fill" style="width:${pct}%"></div></div>
-    <div class="modal-meta">уровень знания: ${s}/6</div>`;
-  document.getElementById('modal-actions').innerHTML=`
-    <button class="btn danger-btn full" onclick="deleteWord(${id});closeWordModal()">удалить слово</button>`;
+    <div class="modal-meta">Уровень знания: ${s}/6</div>`;
+  document.getElementById('modal-actions').innerHTML=`<button class="btn danger-btn full" onclick="deleteWord(${id});closeWordModal()">Удалить слово</button>`;
   document.getElementById('modal-edit-btn').textContent='✏️';
 }
 
 function renderModalEdit(id){
   const w=words.find(x=>x.id===id);if(!w)return;
+  const trans=getWordTranslations(w);
+  const transInputs=trans.map((t,i)=>`<div class="trans-row" id="edit-tr-row-${i}">
+    <input type="text" id="edit-trans-${i}" value="${e(t)}"/>
+    <button class="icon-btn" onclick="removeEditTrans(${i})" style="opacity:.5">×</button>
+  </div>`).join('');
   document.getElementById('modal-body').innerHTML=`
-    <div class="field-group" style="margin-bottom:10px"><label>английское слово</label><input type="text" id="edit-en" value="${e(w.en)}"/></div>
-    <div class="field-group" style="margin-bottom:10px"><label>перевод</label><input type="text" id="edit-ru" value="${e(w.ru)}"/></div>
-    <div class="field-group"><label>транскрипция</label><input type="text" id="edit-tr" value="${e(w.transcription||'')}"/></div>`;
+    <div class="field-group" style="margin-bottom:10px"><label>Английское слово</label><input type="text" id="edit-en" value="${e(w.en)}"/></div>
+    <div class="field-group" style="margin-bottom:10px">
+      <label>Переводы</label>
+      <div id="edit-trans-rows">${transInputs}</div>
+      <span class="trans-add" onclick="addEditTrans()">+ Добавить перевод</span>
+    </div>
+    <div class="field-group"><label>Транскрипция</label><input type="text" id="edit-tr" value="${e(w.transcription||'')}"/></div>`;
   document.getElementById('modal-actions').innerHTML=`
-    <button class="btn solid full" onclick="saveWordEdit(${id})">сохранить</button>
-    <button class="btn full" onclick="renderModalView(${id});inEditMode=false;document.getElementById('modal-edit-btn').textContent='✏️'">отмена</button>`;
+    <button class="btn solid full" onclick="saveWordEdit(${id})">Сохранить</button>
+    <button class="btn full" onclick="renderModalView(${id});inEditMode=false;document.getElementById('modal-edit-btn').textContent='✏️'">Отмена</button>`;
   document.getElementById('modal-edit-btn').textContent='👁';
 }
 
-function toggleEditMode(){
-  if(!currentModalWordId)return;
-  inEditMode=!inEditMode;
-  if(inEditMode) renderModalEdit(currentModalWordId);
-  else renderModalView(currentModalWordId);
+function addEditTrans(){
+  const rows=document.getElementById('edit-trans-rows');const idx=rows.children.length;
+  const div=document.createElement('div');div.className='trans-row';div.id='edit-tr-row-'+idx;
+  div.innerHTML=`<input type="text" id="edit-trans-${idx}" placeholder="Перевод ${idx+1}"/><button class="icon-btn" onclick="removeEditTrans(${idx})" style="opacity:.5">×</button>`;
+  rows.appendChild(div);div.querySelector('input').focus();
 }
+function removeEditTrans(idx){
+  const rows=document.getElementById('edit-trans-rows');
+  if(rows.children.length<=1)return;
+  document.getElementById('edit-tr-row-'+idx)?.remove();
+}
+
+function toggleEditMode(){if(!currentModalWordId)return;inEditMode=!inEditMode;if(inEditMode)renderModalEdit(currentModalWordId);else renderModalView(currentModalWordId);}
 
 async function saveWordEdit(id){
   const en=document.getElementById('edit-en').value.trim();
-  const ru=document.getElementById('edit-ru').value.trim();
   const tr=document.getElementById('edit-tr').value.trim();
-  if(!en||!ru){showToast('error','Ошибка','Заполни оба поля');return;}
+  const trans=[...document.querySelectorAll('[id^="edit-trans-"]')].map(i=>i.value.trim()).filter(Boolean);
+  if(!en||!trans.length){showSnack('Заполни слово и перевод');return;}
+  const ru=trans.join('; ');
   try{
     await upW(id,{en,ru,transcription:tr});
-    const w=words.find(x=>x.id===id);
-    if(w){w.en=en;w.ru=ru;w.transcription=tr;}
-    inEditMode=false;
-    renderModalView(id);
-    renderList();
+    const w=words.find(x=>x.id===id);if(w){w.en=en;w.ru=ru;w.transcription=tr;}
+    inEditMode=false;renderModalView(id);renderList();
     document.getElementById('modal-edit-btn').textContent='✏️';
-    showToast('success','Сохранено','Слово обновлено');
-  }catch(ex){showToast('error','Ошибка',ex.message);}
+    showSnack('✓ Сохранено');
+  }catch(ex){showSnack('Ошибка: '+ex.message);}
 }
 
 // ── DASHBOARD ─────────────────────────────────
 function getDue(){return words.filter(w=>!w.next_review||new Date(w.next_review)<=new Date());}
-
 function renderDash(){
-  const tot=words.length,know=words.filter(w=>(w.score||0)>=6).length;
-  const learn=words.filter(w=>(w.score||0)>0&&(w.score||0)<6).length;
-  const nw=words.filter(w=>(w.score||0)===0).length;
-  document.getElementById('d-total').textContent=tot;
-  document.getElementById('d-know').textContent=know;
-  document.getElementById('d-learn').textContent=learn;
-  document.getElementById('d-new').textContent=nw;
-  const goal=settings.daily_goal||10;
-  const pct=Math.min(100,Math.round((dDone/goal)*100));
-  document.getElementById('goal-total').textContent=goal;
-  document.getElementById('goal-done').textContent=dDone;
-  document.getElementById('goal-pct').textContent=pct+'%';
+  const tot=words.length,know=words.filter(w=>(w.score||0)>=6).length,learn=words.filter(w=>(w.score||0)>0&&(w.score||0)<6).length,nw=words.filter(w=>(w.score||0)===0).length;
+  document.getElementById('d-total').textContent=tot;document.getElementById('d-know').textContent=know;document.getElementById('d-learn').textContent=learn;document.getElementById('d-new').textContent=nw;
+  const goal=settings.daily_goal||10,pct=Math.min(100,Math.round((dDone/goal)*100));
+  document.getElementById('goal-total').textContent=goal;document.getElementById('goal-done').textContent=dDone;document.getElementById('goal-pct').textContent=pct+'%';
   document.getElementById('goal-arc').style.strokeDashoffset=113-(113*pct/100);
   document.getElementById('study-badge').textContent=getDue().length>0?getDue().length+' слов':'';
   document.getElementById('word-map').innerHTML=words.map(w=>`<div class="wm-dot wm-${Math.min(4,w.score||0)}" title="${e(w.en)}" onclick="openModal(${w.id})"></div>`).join('');
-  const dList=getDue().slice(0,8);
-  document.getElementById('due-count').textContent=getDue().length||'';
+  const dList=getDue().slice(0,8);document.getElementById('due-count').textContent=getDue().length||'';
   const dl=document.getElementById('due-list');
-  if(!dList.length){dl.innerHTML='<div class="empty" style="padding:1rem">все слова повторены 🎉</div>';return;}
-  dl.innerHTML=dList.map(w=>{
-    const s=w.score||0;let c='b-new',l='new';
-    if(s>=6){c='b-know';l='know';}else if(s>=2){c='b-learn';l='learning';}
-    return`<div class="due-item" onclick="openModal(${w.id})"><span class="due-en">${e(w.en)}</span><span class="due-ru">${e(w.ru)}</span><span class="badge ${c}">${l}</span></div>`;
-  }).join('');
+  if(!dList.length){dl.innerHTML='<div class="empty" style="padding:1rem">Все слова повторены 🎉</div>';return;}
+  dl.innerHTML=dList.map(w=>{const s=w.score||0;let c='b-new',l='Новое';if(s>=6){c='b-know';l='Знаю';}else if(s>=2){c='b-learn';l='Учу';}return`<div class="due-item" onclick="openModal(${w.id})"><span class="due-en">${e(w.en)}</span><span class="due-ru">${e(getPrimary(w))}</span><span class="badge ${c}">${l}</span></div>`;}).join('');
 }
 
 // ── NAV ───────────────────────────────────────
-function switchTab(name,btn){
-  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-  document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('active'));
-  document.getElementById('tab-'+name).classList.add('active');
-  btn.classList.add('active');
-}
-
-function setDir(d){
-  dir=d;
-  document.getElementById('dir-en').classList.toggle('active',d==='en');
-  document.getElementById('dir-ru').classList.toggle('active',d==='ru');
-  document.getElementById('dir-mix').classList.toggle('active',d==='mix');
-}
-
-function getDir(){ return dir==='mix'?(Math.random()<.5?'en':'ru'):dir; }
+function switchTab(name,btn){document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+name).classList.add('active');btn.classList.add('active');}
+function setDir(d){dir=d;['en','ru','mix'].forEach(x=>document.getElementById('dir-'+x).classList.toggle('active',d===x));}
+function getDir(){return dir==='mix'?(Math.random()<.5?'en':'ru'):dir;}
 
 // ── SESSION ───────────────────────────────────
 function srsQ(pool,n){
@@ -914,12 +895,12 @@ function srsQ(pool,n){
   return r;
 }
 
+// Smart session — random mode selection
 function startSmartSession(){
-  if(!words.length){showToast('error','Нет слов','Сначала добавь слова в словарь');return;}
-  const avg=words.reduce((a,w)=>a+(w.score||0),0)/(words.length||1);
-  let m='flashcard';if(avg>1)m='choice';if(avg>3)m='typing';
-  const due=getDue();
-  startSession(m,due.length>0?due:words);
+  if(!words.length){showSnack('Сначала добавь слова!');return;}
+  const modes=['flashcard','choice','typing'];
+  const m=modes[Math.floor(Math.random()*modes.length)];
+  const due=getDue();startSession(m,due.length>0?due:words);
 }
 
 function getSessionSize(mode){
@@ -928,282 +909,153 @@ function getSessionSize(mode){
   if(mode==='typing')return settings.ty_size||10;
   return 10;
 }
-
 function startSession(mode,pool){
   sM=mode;sI=0;sS=0;sMist=[];chA=false;fcR=false;
   if(mTmr){clearInterval(mTmr);mTmr=null;}
   if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
-  const due=getDue(),src=pool||(due.length>=4?due:words);
-  if(!src.length){showToast('error','Нет слов','Добавь слова чтобы начать');return;}
+  const src=pool||(getDue().length>=4?getDue():words);
+  if(!src.length){showSnack('Добавь слова чтобы начать');return;}
   sW=srsQ(src,getSessionSize(mode));
   document.getElementById('session-overlay').classList.add('active');
   const clock=document.getElementById('session-clock');
-  clock.style.display=settings.timer_on&&mode!=='match'&&mode!=='flashcard'?'block':'none';
+  clock.style.display=settings.timer_on&&(mode==='choice'||mode==='typing')?'block':'none';
   renderCard();
 }
-
 function closeSession(){
   if(mTmr){clearInterval(mTmr);mTmr=null;}
   if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
   document.getElementById('session-overlay').classList.remove('active');
   renderDash();renderList();
 }
-
-function startQuestionTimer(onExpire){
+function startQTimer(onExpire){
   if(!settings.timer_on)return;
-  if(sessionTimerInterval){clearInterval(sessionTimerInterval);}
+  if(sessionTimerInterval)clearInterval(sessionTimerInterval);
   sessionTimeLeft=settings.timer_sec||30;
-  const clock=document.getElementById('session-clock');
-  clock.textContent=sessionTimeLeft+'с';
-  sessionTimerInterval=setInterval(()=>{
-    sessionTimeLeft--;
-    if(clock)clock.textContent=sessionTimeLeft+'с';
-    if(sessionTimeLeft<=0){clearInterval(sessionTimerInterval);onExpire();}
-  },1000);
+  const clock=document.getElementById('session-clock');if(clock)clock.textContent=sessionTimeLeft+'с';
+  sessionTimerInterval=setInterval(()=>{sessionTimeLeft--;if(clock)clock.textContent=sessionTimeLeft+'с';if(sessionTimeLeft<=0){clearInterval(sessionTimerInterval);onExpire();}},1000);
 }
-
-function stopQuestionTimer(){
-  if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
-}
-
-function updP(){
-  const t=sW.length,p=Math.round((sI/t)*100);
-  document.getElementById('spbar').style.width=p+'%';
-  document.getElementById('scounter').textContent=sI+' / '+t;
-  document.getElementById('sscore').textContent=sS;
-}
-
-function renderCard(){
-  updP();
-  if(sI>=sW.length){showRes();return;}
-  const w=sW[sI];
-  if(sM==='flashcard')rFC(w);
-  else if(sM==='choice')rCH(w);
-  else if(sM==='typing')rTY(w);
-  else rMatch();
-}
+function stopQTimer(){if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}}
+function updP(){const t=sW.length,p=Math.round((sI/t)*100);document.getElementById('spbar').style.width=p+'%';document.getElementById('scounter').textContent=sI+' / '+t;document.getElementById('sscore').textContent=sS;}
+function renderCard(){updP();if(sI>=sW.length){showRes();return;}const w=sW[sI];if(sM==='flashcard')rFC(w);else if(sM==='choice')rCH(w);else if(sM==='typing')rTY(w);else rMatch();}
 
 // FLASHCARD
 function rFC(w){
-  const d=getDir(),q=d==='en'?w.en:w.ru,a=d==='en'?w.ru:w.en;
+  const d=getDir(),q=d==='en'?w.en:getPrimary(w),a=d==='en'?getWordTranslations(w):w.en;
+  const aHtml=Array.isArray(a)&&a.length>1
+    ?`<div class="fc-answer-pills">${a.map(t=>`<span class="fc-answer-pill">${e(t)}</span>`).join('')}</div>`
+    :`<div class="fc-answer">${e(Array.isArray(a)?a[0]:a)}</div>`;
   const sb=document.getElementById('sbody');
-  if(!fcR){
-    sb.innerHTML=`<div class="fc-card" onclick="rvFC()">
-      <span class="fc-hint">нажми чтобы открыть</span>
-      <div class="fc-word">${e(q)}</div>
-      ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
-    </div>`;
-  }else{
-    sb.innerHTML=`<div class="fc-card" style="cursor:default">
-      <div class="fc-word">${e(q)}</div>
-      ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
-      <div class="fc-answer">${e(a)}</div>
-    </div>
-    <div class="rate-row">
-      <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">не знал</button>
-      <button class="btn" onclick="fcRt(${w.id},1)">сомневался</button>
-      <button class="btn acc" onclick="fcRt(${w.id},3)">знал ✓</button>
-    </div>`;
-  }
+  if(!fcR){sb.innerHTML=`<div class="fc-card" onclick="rvFC()"><span class="fc-hint">Нажми чтобы открыть</span><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}</div>`;}
+  else{sb.innerHTML=`<div class="fc-card" style="cursor:default"><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}${aHtml}</div><div class="rate-row"><button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button><button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button><button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button></div>`;}
 }
 function rvFC(){fcR=true;rFC(sW[sI]);}
-async function fcRt(id,d){
-  if(d>0){sS++;dDone++;}else sMist.push(sW[sI]);
-  await upScore(id,d);fcR=false;sI++;renderCard();
-}
+async function fcRt(id,d){if(d>0){sS++;dDone++;}else sMist.push(sW[sI]);await upScore(id,d);fcR=false;sI++;renderCard();}
 
 // CHOICE
 function rCH(w){
-  const d=getDir(),q=d==='en'?w.en:w.ru,ca=d==='en'?w.ru:w.en;
+  const d=getDir(),q=d==='en'?w.en:getPrimary(w),ca=d==='en'?getPrimary(w):w.en;
   const oth=words.filter(x=>x.id!==w.id).sort(()=>Math.random()-.5).slice(0,3);
-  const opts=[{id:w.id,t:ca},...oth.map(o=>({id:o.id,t:d==='en'?o.ru:o.en}))].sort(()=>Math.random()-.5);
-  document.getElementById('sbody').innerHTML=`
-    <div class="q-word">${e(q)}</div>
-    ${w.transcription&&d==='en'?`<div class="q-transcription">[${e(w.transcription)}]</div>`:''}
-    <div class="choices">${opts.map(o=>`<button class="ch-btn" id="co${o.id}" onclick="aCH(${w.id},${o.id},event)">${e(o.t)}</button>`).join('')}</div>
-    <div id="we2" class="wrong-explain"></div>
-    <div class="next-wrap" id="nxt"><button class="btn solid" onclick="nCH()">далее →</button></div>`;
-  startQuestionTimer(()=>{
-    if(!chA) aCH(w.id,-1,null,true);
-  });
+  const opts=[{id:w.id,t:ca},...oth.map(o=>({id:o.id,t:d==='en'?getPrimary(o):o.en}))].sort(()=>Math.random()-.5);
+  document.getElementById('sbody').innerHTML=`<div class="q-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="q-transcription">[${e(w.transcription)}]</div>`:''}<div class="choices">${opts.map(o=>`<button class="ch-btn" id="co${o.id}" onclick="aCH(${w.id},${o.id})">${e(o.t)}</button>`).join('')}</div><div id="we2" class="wrong-explain"></div><div class="next-wrap" id="nxt"><button class="btn solid" onclick="nCH()">Далее →</button></div>`;
+  startQTimer(()=>{if(!chA)aCH(w.id,-1,true);});
 }
-async function aCH(cid,ch,evt,timedOut){
-  if(chA)return;chA=true;stopQuestionTimer();
-  const ok=!timedOut&&cid===ch;
+async function aCH(cid,ch,timedOut){
+  if(chA)return;chA=true;stopQTimer();const ok=!timedOut&&cid===ch;
   document.querySelectorAll('.ch-btn').forEach(b=>b.disabled=true);
-  document.getElementById('co'+cid).classList.add('ok');
-  if(!ok){
-    if(ch!==-1&&document.getElementById('co'+ch)) document.getElementById('co'+ch).classList.add('no');
-    sMist.push(sW[sI]);
-    const ex=document.getElementById('we2');ex.style.display='block';
-    ex.textContent=(timedOut?'⏱ время вышло! ':'')+'правильный ответ: '+(getDir()==='en'?sW[sI].ru:sW[sI].en);
-  }else{sS++;dDone++;}
-  await upScore(cid,ok?2:-1);
-  document.getElementById('nxt').style.display='block';
+  document.getElementById('co'+cid)?.classList.add('ok');
+  if(!ok){if(ch!==-1)document.getElementById('co'+ch)?.classList.add('no');sMist.push(sW[sI]);const ex=document.getElementById('we2');ex.style.display='block';ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильный ответ: '+getPrimary(sW[sI]);}
+  else{sS++;dDone++;}
+  await upScore(cid,ok?2:-1);document.getElementById('nxt').style.display='block';
 }
 function nCH(){chA=false;sI++;renderCard();}
 
-// TYPING
-function rTY(w){
-  const d=getDir(),q=d==='en'?w.ru:w.en,a=d==='en'?w.en:w.ru;
-  const sb=document.getElementById('sbody');sb.dataset.ans=a;sb.dataset.wid=w.id;
-  sb.innerHTML=`
-    <div class="t-question">${e(q)}</div>
-    ${w.transcription&&d==='ru'?`<div class="t-transcription">[${e(w.transcription)}]</div>`:''}
-    <div class="t-input-row">
-      <input type="text" id="tyi" placeholder="введи перевод..." onkeydown="if(event.key==='Enter')chkTY()"/>
-      <button class="btn solid" onclick="chkTY()">✓</button>
-    </div>
-    <div id="tyr" class="t-result"></div>
-    <div class="t-actions">
-      <span class="skip-link" onclick="sI++;renderCard()">пропустить</span>
-      <span class="hint-link" onclick="showHint()">подсказка 💡</span>
-    </div>`;
-  setTimeout(()=>{const i=document.getElementById('tyi');if(i)i.focus();},50);
-  startQuestionTimer(()=>{
-    const res=document.getElementById('tyr');
-    if(res&&res.style.display==='none'||!res?.textContent){
-      res.style.display='block';res.className='t-result t-fail';
-      res.textContent='⏱ время вышло! Ответ: '+document.getElementById('sbody').dataset.ans;
-      const inp=document.getElementById('tyi');if(inp)inp.disabled=true;
-      sMist.push(sW[sI]);upScore(parseInt(document.getElementById('sbody').dataset.wid),-1);
-      sI++;setTimeout(renderCard,1800);
-    }
-  });
-}
-
-function showHint(){
-  const sb=document.getElementById('sbody');
-  const ans=sb.dataset.ans||'';
-  const inp=document.getElementById('tyi');
-  // reveal first half of word
-  const half=Math.ceil(ans.length/2);
-  const hint=ans.slice(0,half)+'_'.repeat(ans.length-half);
-  if(inp&&!inp.value) inp.value=hint.slice(0,1);
-  // show hint below
-  let hEl=document.getElementById('hint-box');
-  if(!hEl){
-    hEl=document.createElement('div');hEl.id='hint-box';
-    hEl.style.cssText='font-size:18px;letter-spacing:4px;color:var(--acc);font-weight:600;margin-top:8px;font-family:monospace;';
-    document.getElementById('tyr').insertAdjacentElement('afterend',hEl);
-  }
-  hEl.textContent=ans.split('').map((c,i)=>i<half?c:'_').join(' ');
-}
-
-function smatch(a,b){
-  const x=a.toLowerCase().trim(),y=b.toLowerCase().trim();
-  if(x===y)return'ok';
-  const st=s=>s.replace(/^(a |an |the |to )/i,'').trim();
-  if(st(x)===st(y))return'ok';
+// TYPING — check against ALL translations
+function smatch(a,trans){
+  const x=a.toLowerCase().trim();
+  const strip=s=>s.replace(/^(a |an |the |to )/i,'').trim();
+  for(const t of trans){const y=t.toLowerCase().trim();if(x===y||strip(x)===strip(y))return'ok';}
+  // near match against primary
+  const y=trans[0]?.toLowerCase().trim()||'';
   if(Math.abs(x.length-y.length)<=2){let d=0;for(let i=0;i<Math.max(x.length,y.length);i++)if(x[i]!==y[i])d++;if(d<=2&&d>0)return'near';}
   return'fail';
 }
+function rTY(w){
+  const d=getDir(),q=d==='en'?getPrimary(w):w.en;
+  const sb=document.getElementById('sbody');sb.dataset.wid=w.id;sb.dataset.dir=d;
+  sb.innerHTML=`<div class="t-question">${e(q)}</div>${w.transcription&&d==='ru'?`<div class="t-transcription">[${e(w.transcription)}]</div>`:''}<div class="t-input-row"><input type="text" id="tyi" placeholder="Введи перевод..." onkeydown="if(event.key==='Enter')chkTY()"/><button class="btn solid" onclick="chkTY()">✓</button></div><div id="tyr" class="t-result"></div><div class="t-actions"><span class="skip-link" onclick="sI++;renderCard()">Пропустить</span><span class="hint-link" onclick="showHint()">Подсказка 💡</span></div>`;
+  setTimeout(()=>{const i=document.getElementById('tyi');if(i)i.focus();},50);
+  startQTimer(()=>{const res=document.getElementById('tyr');if(res&&!res.textContent){stopQTimer();res.style.display='block';res.className='t-result t-fail';const w2=sW[sI];res.textContent='⏱ Время вышло! Ответ: '+(sb.dataset.dir==='en'?w2.en:getPrimary(w2));const inp=document.getElementById('tyi');if(inp)inp.disabled=true;sMist.push(sW[sI]);upScore(parseInt(sb.dataset.wid),-1);sI++;setTimeout(renderCard,1800);}});
+}
+function showHint(){
+  const sb=document.getElementById('sbody'),d=sb.dataset.dir;
+  const w=sW[sI];const ans=d==='en'?w.en:getPrimary(w);
+  let hEl=document.getElementById('hint-box');
+  if(!hEl){hEl=document.createElement('div');hEl.id='hint-box';hEl.style.cssText='font-size:18px;letter-spacing:4px;color:var(--acc);font-weight:600;margin-top:8px;font-family:monospace;';document.getElementById('tyr').insertAdjacentElement('afterend',hEl);}
+  const half=Math.ceil(ans.length/2);hEl.textContent=ans.split('').map((c,i)=>i<half?c:'_').join(' ');
+}
 async function chkTY(){
-  stopQuestionTimer();
+  stopQTimer();
   const sb=document.getElementById('sbody'),inp=document.getElementById('tyi'),res=document.getElementById('tyr');
   if(!inp||!res||!inp.value.trim())return;
-  const ua=inp.value.trim(),ca=sb.dataset.ans,wid=parseInt(sb.dataset.wid),r=smatch(ua,ca);
+  const ua=inp.value.trim(),wid=parseInt(sb.dataset.wid),d=sb.dataset.dir;
+  const w=sW[sI];
+  const correctTrans=d==='en'?getWordTranslations(w):[w.en];
+  const r=smatch(ua,correctTrans);
   res.style.display='block';inp.disabled=true;
-  if(r==='ok'){res.className='t-result t-ok';res.textContent='✓ верно!';sS++;dDone++;await upScore(wid,2);sI++;setTimeout(renderCard,1200);}
-  else if(r==='near'){res.className='t-result t-near';res.textContent='~ почти! правильно: '+ca;await upScore(wid,1);dDone++;sI++;setTimeout(renderCard,1800);}
-  else{res.className='t-result t-fail';res.textContent='✗ '+ca;sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);}
+  if(r==='ok'){res.className='t-result t-ok';res.textContent='✓ Верно!';sS++;dDone++;await upScore(wid,2);sI++;setTimeout(renderCard,1200);}
+  else if(r==='near'){res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+getPrimary(w);await upScore(wid,1);dDone++;sI++;setTimeout(renderCard,1800);}
+  else{res.className='t-result t-fail';res.textContent='✗ '+getPrimary(w);sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);}
 }
 
-// MATCH
+// MATCH — no progress bar, just timer
 function rMatch(){
   if(mTmr){clearInterval(mTmr);mTmr=null;}mSec=0;
   const pool=[...words].sort(()=>Math.random()-.5).slice(0,6);
   const en=pool.map(w=>({id:w.id,t:w.en})).sort(()=>Math.random()-.5);
-  const ru=pool.map(w=>({id:w.id,t:w.ru})).sort(()=>Math.random()-.5);
+  const ru=pool.map(w=>({id:w.id,t:getPrimary(w)})).sort(()=>Math.random()-.5);
   mSt={sel:null,matched:[],pairs:pool};
-  document.getElementById('sbody').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem">
-      <span class="match-hint">выбери слово, затем перевод</span>
-      <span id="mtmr" class="match-timer">0:00</span>
-    </div>
-    <div class="match-cols">
-      <div class="match-col">${en.map(i=>`<button class="m-btn" id="me${i.id}" onclick="selM('en',${i.id})">${e(i.t)}</button>`).join('')}</div>
-      <div class="match-col">${ru.map(i=>`<button class="m-btn" id="mr${i.id}" onclick="selM('ru',${i.id})">${e(i.t)}</button>`).join('')}</div>
-    </div>
-    <div id="mmsg" class="match-msg"></div>`;
+  document.getElementById('sbody').innerHTML=`<div class="match-timer-row"><span class="match-hint">Выбери слово, затем перевод</span><span id="mtmr" class="match-timer">0:00</span></div><div class="match-cols"><div class="match-col">${en.map(i=>`<button class="m-btn" id="me${i.id}" onclick="selM('en',${i.id})">${e(i.t)}</button>`).join('')}</div><div class="match-col">${ru.map(i=>`<button class="m-btn" id="mr${i.id}" onclick="selM('ru',${i.id})">${e(i.t)}</button>`).join('')}</div></div><div id="mmsg" class="match-msg"></div>`;
   mTmr=setInterval(()=>{mSec++;const m=Math.floor(mSec/60),s=mSec%60;const el=document.getElementById('mtmr');if(el)el.textContent=m+':'+String(s).padStart(2,'0');},1000);
 }
 async function selM(lang,id){
-  if(mSt.matched.includes(id))return;
-  const msg=document.getElementById('mmsg');
-  if(lang==='en'){
-    document.querySelectorAll('[id^="me"]').forEach(b=>b.classList.remove('m-sel'));
-    mSt.sel=id;document.getElementById('me'+id).classList.add('m-sel');
-    msg.textContent='теперь выбери перевод';
-  }else{
-    if(!mSt.sel){msg.textContent='сначала выбери английское слово';return;}
+  if(mSt.matched.includes(id))return;const msg=document.getElementById('mmsg');
+  if(lang==='en'){document.querySelectorAll('[id^="me"]').forEach(b=>b.classList.remove('m-sel'));mSt.sel=id;document.getElementById('me'+id).classList.add('m-sel');msg.textContent='Теперь выбери перевод';}
+  else{
+    if(!mSt.sel){msg.textContent='Сначала выбери английское слово';return;}
     const sid=mSt.sel;mSt.sel=null;document.getElementById('me'+sid).classList.remove('m-sel');
-    if(sid===id){
-      document.getElementById('me'+id).classList.add('m-ok');document.getElementById('mr'+id).classList.add('m-ok');
-      document.getElementById('me'+id).disabled=true;document.getElementById('mr'+id).disabled=true;
-      mSt.matched.push(id);await upScore(id,1);dDone++;msg.textContent='✓ верно!';
-      if(mSt.matched.length===mSt.pairs.length){clearInterval(mTmr);mTmr=null;sS=mSt.pairs.length;sI=sW.length;setTimeout(showRes,600);}
-    }else{
-      const eb=document.getElementById('me'+sid),rb=document.getElementById('mr'+id);
-      eb.classList.add('m-err');rb.classList.add('m-err');msg.textContent='не то, попробуй снова';
-      setTimeout(()=>{eb.classList.remove('m-err');rb.classList.remove('m-err');msg.textContent='';},700);
-    }
+    if(sid===id){document.getElementById('me'+id).classList.add('m-ok');document.getElementById('mr'+id).classList.add('m-ok');document.getElementById('me'+id).disabled=true;document.getElementById('mr'+id).disabled=true;mSt.matched.push(id);await upScore(id,1);dDone++;msg.textContent='✓ Верно!';if(mSt.matched.length===mSt.pairs.length){clearInterval(mTmr);mTmr=null;sS=mSt.pairs.length;sI=sW.length;setTimeout(showRes,600);}}
+    else{const eb=document.getElementById('me'+sid),rb=document.getElementById('mr'+id);eb.classList.add('m-err');rb.classList.add('m-err');msg.textContent='Не то, попробуй снова';setTimeout(()=>{eb.classList.remove('m-err');rb.classList.remove('m-err');msg.textContent='';},700);}
   }
 }
 
-// RESULT
 function showRes(){
   updStr();renderDash();
-  const tot=sM==='match'?mSt.pairs?.length||10:sW.length;
-  const pct=Math.round((sS/tot)*100);
+  const tot=sM==='match'?mSt.pairs?.length||10:sW.length,pct=Math.round((sS/tot)*100);
   let emoji='📚';if(pct>=80)emoji='🎉';else if(pct>=50)emoji='💪';
-  const mh=sMist.length?`<div class="result-mistakes">
-    <div class="result-mistakes-title">ошибки — повтори:</div>
-    ${sMist.slice(0,5).map(w=>`<div class="mistake-item"><span class="mistake-en">${e(w.en)}</span><span class="mistake-ru">${e(w.ru)}</span></div>`).join('')}
-  </div>`:'';
-  document.getElementById('sbody').innerHTML=`<div class="result">
-    <div class="result-emoji">${emoji}</div>
-    <div class="result-big">${sS}<span style="font-size:32px;color:var(--muted)">/${tot}</span></div>
-    <div class="result-label">${pct}% верно</div>
-    <div class="result-sub">${pct>=80?'отличный результат!':pct>=50?'хороший прогресс!':'продолжай практиковать'}</div>
-    ${mh}
-    <div class="result-actions">
-      <button class="btn" onclick="closeSession()">на главную</button>
-      <button class="btn solid" onclick="startSession('${sM}')">ещё раз</button>
-    </div>
-  </div>`;
-  document.getElementById('spbar').style.width='100%';
-  document.getElementById('scounter').textContent=tot+' / '+tot;
-  document.getElementById('sscore').textContent=sS;
+  const mh=sMist.length?`<div class="result-mistakes"><div class="result-mistakes-title">Ошибки — повтори:</div>${sMist.slice(0,5).map(w=>`<div class="mistake-item"><span class="mistake-en">${e(w.en)}</span><span class="mistake-ru">${e(getPrimary(w))}</span></div>`).join('')}</div>`:'';
+  document.getElementById('sbody').innerHTML=`<div class="result"><div class="result-emoji">${emoji}</div><div class="result-big">${sS}<span style="font-size:32px;color:var(--muted)">/${tot}</span></div><div class="result-label">${pct}% верно</div><div class="result-sub">${pct>=80?'Отличный результат!':pct>=50?'Хороший прогресс!':'Продолжай практиковать'}</div>${mh}<div class="result-actions"><button class="btn" onclick="closeSession()">На главную</button><button class="btn solid" onclick="startSession('${sM}')">Ещё раз</button></div></div>`;
+  document.getElementById('spbar').style.width='100%';document.getElementById('scounter').textContent=tot+' / '+tot;document.getElementById('sscore').textContent=sS;
 }
 
-// ── TOAST ─────────────────────────────────────
-function showToast(type,title,msg,duration){
-  const wrap=document.getElementById('toast-wrap');
-  wrap.style.display='block';
-  wrap.innerHTML=`<div class="toast ${type}">
-    <div class="toast-title">${title}</div>
-    <div class="toast-msg">${msg}</div>
-  </div>`;
-  setTimeout(()=>{wrap.style.display='none';},duration||3000);
+// ── NOTIFICATIONS ─────────────────────────────
+function showSnack(msg,duration){
+  let el=document.getElementById('snack-el');
+  if(el)el.remove();
+  el=document.createElement('div');el.id='snack-el';el.className='snack';el.textContent=msg;
+  document.body.appendChild(el);
+  setTimeout(()=>el?.remove(),duration||2200);
+}
+function showToast(type,title,msg){
+  const wrap=document.getElementById('toast-wrap');wrap.style.display='block';
+  wrap.innerHTML=`<div class="toast ${type}"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div><div class="toast-actions"><button class="btn sm" onclick="closeToast()">OK</button></div></div>`;
 }
 
 // ── CONFIRM ───────────────────────────────────
 function showConfirm(title,msg,cb){
-  confirmCallback=cb;
-  document.getElementById('confirm-title').textContent=title;
-  document.getElementById('confirm-msg').textContent=msg;
-  document.getElementById('confirm-overlay').classList.add('active');
+  confirmCallback=cb;document.getElementById('confirm-title').textContent=title;document.getElementById('confirm-msg').textContent=msg;document.getElementById('confirm-overlay').classList.add('active');
 }
-function confirmOk(){
-  document.getElementById('confirm-overlay').classList.remove('active');
-  if(confirmCallback)confirmCallback();
-  confirmCallback=null;
-}
-function confirmCancel(){
-  document.getElementById('confirm-overlay').classList.remove('active');
-  confirmCallback=null;
-}
+function confirmOk(){document.getElementById('confirm-overlay').classList.remove('active');if(confirmCallback)confirmCallback();confirmCallback=null;}
+function confirmCancel(){document.getElementById('confirm-overlay').classList.remove('active');confirmCallback=null;}
 
 // ── UTIL ──────────────────────────────────────
 function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
