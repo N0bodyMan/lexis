@@ -248,6 +248,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .skip-link:hover{color:var(--txt2);}
 .hint-link{font-size:12px;color:var(--acc);cursor:pointer;font-weight:500;}
 .hint-link:hover{text-decoration:underline;}
+/* SPEAK BUTTON */
+.speak-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;opacity:.55;transition:opacity .15s;flex-shrink:0;}
+.speak-btn:hover{opacity:1;}
+.speak-btn.speaking{opacity:1;animation:speakPulse .6s ease-in-out infinite alternate;}
+@keyframes speakPulse{from{transform:scale(1);}to{transform:scale(1.25);}}
 
 /* MATCH */
 .match-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
@@ -987,6 +992,7 @@ function renderList(){
         <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}
         ${transHtml}
       </div>
+      <button class="speak-btn" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>
       <span class="badge ${c}">${l}</span>
     </div>`;
   }).join('');
@@ -1001,7 +1007,10 @@ function renderModalView(id){
   const s=w.score||0,pct=Math.round((s/6)*100),rev=w.last_reviewed?new Date(w.last_reviewed).toLocaleDateString('ru-RU'):'никогда';
   const trans=getWordTranslations(w);
   document.getElementById('modal-body').innerHTML=`
-    <div class="modal-word">${e(w.en)}</div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="modal-word">${e(w.en)}</div>
+      <button class="speak-btn" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать произношение">🔊</button>
+    </div>
     ${w.transcription?`<div class="modal-tr">[${e(w.transcription)}]</div>`:''}
     <div class="modal-translations">${trans.map(t=>`<span class="modal-trans-pill">${e(t)}</span>`).join('')}</div>
     <div class="modal-meta">Повторений: ${w.review_count||0} · Последний раз: ${rev}</div>
@@ -1171,11 +1180,13 @@ function rFC(w){
   const sb=document.getElementById('sbody');
   if(!fcR){
     sb.innerHTML=`<div class="fc-card" onclick="rvFC()"><span class="fc-hint">Нажми чтобы открыть</span><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}</div>`;
+    if(d==='en')setTimeout(()=>speak(w.en),120);
     // Таймер на карточку — если включён, автоматически переворачивает
     startQTimer(()=>{rvFC();});
   }else{
     stopQTimer();
     sb.innerHTML=`<div class="fc-card" style="cursor:default"><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}${aHtml}</div><div class="rate-row"><button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button><button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button><button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button></div>`;
+    if(d==='en')speak(w.en);
   }
 }
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
@@ -1195,11 +1206,15 @@ function rCH(w){
   ].sort(()=>Math.random()-.5);
 
   document.getElementById('sbody').innerHTML=`
-    <div class="q-word">${e(q)}</div>
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:.5rem">
+      <div class="q-word" style="margin-bottom:0">${e(q)}</div>
+      ${d==='en'?`<button class="speak-btn" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
+    </div>
     ${w.transcription&&d==='en'?`<div class="q-transcription">[${e(w.transcription)}]</div>`:''}
     <div class="choices">${opts.map(o=>`<button class="ch-btn" id="co${o.id}-${o.correct?'ok':'no'}" onclick="aCH(${w.id},'${o.id}',${o.correct})">${e(o.t)}</button>`).join('')}</div>
     <div id="we2" class="wrong-explain"></div>
     <div class="next-wrap" id="nxt"><button class="btn solid" onclick="nCH()">Далее →</button></div>`;
+  if(d==='en')speak(w.en);
   startQTimer(()=>{if(!chA)aCH(w.id,-1,false,true);});
 }
 async function aCH(wid, optId, isCorrect, timedOut){
@@ -1249,7 +1264,10 @@ function rTY(w){
   sb.dataset.wid=w.id;
   sb.dataset.dir=d;
   sb.innerHTML=`
-    <div class="t-question">${e(q)}</div>
+    <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:.5rem">
+      <div class="t-question" style="margin-bottom:0">${e(q)}</div>
+      ${d==='ru'?`<button class="speak-btn" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
+    </div>
     ${showTr?`<div class="t-transcription">[${e(w.transcription)}]</div>`:''}
     <div class="t-input-row">
       <input type="text" id="tyi" placeholder="Введи перевод..." onkeydown="if(event.key==='Enter')chkTY()"/>
@@ -1260,6 +1278,7 @@ function rTY(w){
       <span class="skip-link" onclick="sI++;renderCard()">Пропустить</span>
       <span class="hint-link" onclick="showHint()">Подсказка 💡</span>
     </div>`;
+  if(d==='ru')speak(w.en);
   setTimeout(()=>{const i=document.getElementById('tyi');if(i)i.focus();},50);
   startQTimer(()=>{
     const res=document.getElementById('tyr');
@@ -1444,6 +1463,36 @@ function confirmCancel(){document.getElementById('confirm-overlay').classList.re
 
 // ── UTIL ──────────────────────────────────────
 function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── SPEECH ────────────────────────────────────
+let _speakBtn=null;
+function speak(text,evOrBtn){
+  if(!('speechSynthesis' in window)){showSnack('Произношение не поддерживается в этом браузере');return;}
+  window.speechSynthesis.cancel();
+  // Анимация кнопки
+  if(_speakBtn){_speakBtn.classList.remove('speaking');}
+  const btn=evOrBtn instanceof Event?evOrBtn.currentTarget:(evOrBtn||null);
+  _speakBtn=btn;
+  if(btn)btn.classList.add('speaking');
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='en-US';
+  u.rate=0.88;
+  u.pitch=1;
+  // Выбираем лучший доступный голос
+  const voices=window.speechSynthesis.getVoices();
+  const preferred=voices.find(v=>v.lang==='en-US'&&/google|natural|premium|enhanced|samantha|daniel/i.test(v.name))
+    ||voices.find(v=>v.lang==='en-US')
+    ||voices.find(v=>v.lang.startsWith('en'));
+  if(preferred)u.voice=preferred;
+  u.onend=()=>{if(btn)btn.classList.remove('speaking');_speakBtn=null;};
+  u.onerror=()=>{if(btn)btn.classList.remove('speaking');_speakBtn=null;};
+  window.speechSynthesis.speak(u);
+}
+// Предзагрузка голосов (браузеры загружают список асинхронно)
+if('speechSynthesis' in window){
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.addEventListener('voiceschanged',()=>window.speechSynthesis.getVoices());
+}
 </script>
 </body>
 </html>
