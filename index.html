@@ -171,12 +171,14 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .selected-info.visible{display:block;}
 
 .wlist{display:flex;flex-direction:column;gap:4px;}
-.wi{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;box-shadow:var(--sh);}
+.wi{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;box-shadow:var(--sh);}
 .wi:hover{border-color:var(--border2);}
 .wi.selected{border-color:var(--acc);background:var(--acc-bg);}
-.wi-check{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s;color:transparent;}
+.wi-check{width:18px;height:18px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s;color:transparent;margin-top:1px;}
 .wi.selected .wi-check{background:var(--acc);border-color:var(--acc);color:#fff;}
 .wi-content{flex:1;min-width:0;}
+.wi-right{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;width:44px;}
+.wi-right .speak-btn{margin-top:0;font-size:15px;opacity:.45;}
 .we{font-size:13px;font-weight:600;color:var(--txt);}
 .wtr{font-size:11px;color:var(--muted);}
 .wr{font-size:12px;color:var(--txt2);margin-top:2px;}
@@ -798,6 +800,7 @@ async function lok(u){
 }
 
 function logout(){
+  clearWordsCache();
   CU=null;words=[];dDone=0;saveDailyDone(0);selectedWords.clear();
   localStorage.removeItem('lx');
   document.getElementById('screen-app').classList.remove('active');
@@ -927,16 +930,132 @@ function getWordTranslations(w){
   return parseTranslations(w.ru||'');
 }
 
-// ── WORDS ─────────────────────────────────────
-async function loadWords(){
-  document.getElementById('wlist').innerHTML='<div class="loading">Загрузка...</div>';
+// ── WORDS CACHE ───────────────────────────────
+// Паттерн: stale-while-revalidate
+// 1. Показываем из кэша мгновенно (если есть)
+// 2. Параллельно тихо обновляем из БД
+// 3. Если кэша нет — стандартный запрос с индикатором загрузки
+
+const CACHE_KEY_PFX = 'lx_words_'; // + user id
+const CACHE_TTL_MS  = 5 * 60 * 1000; // 5 минут — после этого фон-обновление обязательно
+
+function cacheKey(){ return CACHE_KEY_PFX + (CU?.id||''); }
+
+function wordsFromCache(){
   try{
-    words=await gW(CU.id)||[];
-    loadSM2Cache();
-    listPage=0;renderDash();renderList();
-  }
-  catch(ex){document.getElementById('wlist').innerHTML='<div class="empty">Ошибка загрузки</div>';}
+    const raw = localStorage.getItem(cacheKey());
+    if(!raw) return null;
+    const {ts, data} = JSON.parse(raw);
+    return {data, fresh: (Date.now()-ts) < CACHE_TTL_MS, ts};
+  }catch(_){ return null; }
 }
+
+function wordsToCache(arr){
+  try{
+    // Не кэшируем sm2_* поля — они уже в lx_sm2
+    const slim = arr.map(w=>({
+      id:w.id, user_id:w.user_id, en:w.en, ru:w.ru, en_lower:w.en_lower,
+      transcription:w.transcription, score:w.score, next_review:w.next_review,
+      review_count:w.review_count, last_reviewed:w.last_reviewed, created_at:w.created_at
+    }));
+    localStorage.setItem(cacheKey(), JSON.stringify({ts:Date.now(), data:slim}));
+  }catch(e){
+    // localStorage может быть переполнен (5MB лимит)
+    // Чистим старые кэши других пользователей и пробуем снова
+    try{
+      Object.keys(localStorage)
+        .filter(k=>k.startsWith(CACHE_KEY_PFX) && k!==cacheKey())
+        .forEach(k=>localStorage.removeItem(k));
+      localStorage.setItem(cacheKey(), JSON.stringify({ts:Date.now(), data:arr}));
+    }catch(_){}
+  }
+}
+
+function clearWordsCache(){ try{localStorage.removeItem(cacheKey());}catch(_){} }
+
+// Применяем свежие данные из БД к локальному массиву слов
+// Объединяем: БД — источник правды для всего кроме SM-2,
+// SM-2 данные берём из lx_sm2 (они обновляются локально сразу)
+function mergeWordsFromDB(fresh){
+  const sm2cache = (() => {
+    try{ return JSON.parse(localStorage.getItem('lx_sm2')||'{}'); }catch(_){ return {}; }
+  })();
+  return fresh.map(w => {
+    const sm = sm2cache[w.id] || {};
+    return {...w, sm2_ef:sm.ef, sm2_intv:sm.intv, sm2_reps:sm.reps};
+  });
+}
+
+async function loadWords(){
+  const cached = wordsFromCache();
+
+  if(cached){
+    // Есть кэш → показываем немедленно
+    words = mergeWordsFromDB(cached.data);
+    listPage=0; renderDash(); renderList();
+    // Показываем тихий индикатор обновления только если кэш устарел
+    if(!cached.fresh){
+      showCacheStatus('обновляю...');
+    }
+    // Фоновое обновление — не блокирует UI
+    _revalidateWords();
+  } else {
+    // Кэша нет → обычная загрузка с индикатором
+    document.getElementById('wlist').innerHTML='<div class="loading">Загрузка...</div>';
+    try{
+      const fresh = await gW(CU.id) || [];
+      words = mergeWordsFromDB(fresh);
+      wordsToCache(fresh);
+      listPage=0; renderDash(); renderList();
+    }catch(ex){
+      document.getElementById('wlist').innerHTML=
+        '<div class="empty">Ошибка загрузки. <span style="color:var(--acc);cursor:pointer" onclick="loadWords()">Повторить</span></div>';
+    }
+  }
+}
+
+// Фоновое обновление — не трогает UI если данные не изменились
+let _revalidating = false;
+async function _revalidateWords(){
+  if(_revalidating) return;
+  _revalidating = true;
+  try{
+    const fresh = await gW(CU.id) || [];
+    // Проверяем изменились ли данные прежде чем перерисовывать
+    const cached = wordsFromCache();
+    const changed = !cached || fresh.length !== cached.data.length ||
+      fresh.some(fw => {
+        const cw = cached.data.find(c=>c.id===fw.id);
+        return !cw || cw.score!==fw.score || cw.next_review!==fw.next_review ||
+               cw.en!==fw.en || cw.ru!==fw.ru;
+      });
+    wordsToCache(fresh); // обновляем кэш в любом случае
+    if(changed){
+      words = mergeWordsFromDB(fresh);
+      listPage=0; renderDash(); renderList();
+    }
+    showCacheStatus('');
+  }catch(ex){
+    showCacheStatus('офлайн режим');
+  }finally{
+    _revalidating = false;
+  }
+}
+
+// Маленький статус-бейдж под хедером (не мешает работе)
+function showCacheStatus(msg){
+  let el = document.getElementById('cache-status');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'cache-status';
+    el.style.cssText = 'position:fixed;top:var(--hh);left:0;right:0;z-index:99;text-align:center;font-size:10px;color:var(--muted);padding:2px 0;background:var(--bg);transition:opacity .3s;letter-spacing:.04em;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.opacity = msg ? '1' : '0';
+}
+
+// ── WORDS ─────────────────────────────────────
 
 async function addWord(){
   const en=document.getElementById('inp-en').value.trim();
@@ -946,7 +1065,7 @@ async function addWord(){
   const ru=trans.join('; ');
   try{
     const w=await aW(CU.id,en,ru,tr);
-    if(w){words.push(w);renderDash();renderList();}
+    if(w){words.push(w);wordsToCache(words);renderDash();renderList();}
     document.getElementById('inp-en').value='';document.getElementById('inp-tr').value='';
     document.getElementById('trans-rows').innerHTML=`<div class="trans-row"><input type="text" placeholder="Перевод 1" onkeydown="handleTransKey(event,0)"/><button class="icon-btn" onclick="removeTrans(0)" style="opacity:.5" title="Удалить">×</button></div>`;
     document.getElementById('inp-en').focus();
@@ -990,6 +1109,7 @@ async function doImport(){
   }
   wrap.innerHTML=`<div class="toast success"><div class="toast-title">✓ Готово!</div><div class="toast-msg">Добавлено <strong>${added}</strong> из ${parsed.length} слов</div><div class="toast-actions"><button class="btn sm solid" onclick="closeToast()">OK</button></div></div>`;
   document.getElementById('inp-import').value='';window._importParsed=null;
+  wordsToCache(words);
   renderDash();renderList();
 }
 function closeToast(){document.getElementById('toast-wrap').style.display='none';}
@@ -1012,14 +1132,19 @@ async function deleteWords(ids){
   }
   words=words.filter(w=>!ids.includes(w.id));
   selectedWords.clear();
+  wordsToCache(words);
   wrap.innerHTML=`<div class="toast success"><div class="toast-title">✓ Удалено</div><div class="toast-msg">Удалено ${deleted} слов</div><div class="toast-actions"><button class="btn sm solid" onclick="closeToast()">OK</button></div></div>`;
   renderDash();renderList();updateSelUI();
   setTimeout(()=>{wrap.style.display='none';},2500);
 }
 
 async function deleteWord(id){
-  try{await dW(id);words=words.filter(w=>w.id!==id);renderDash();renderList();showSnack('Слово удалено');}
-  catch(ex){showSnack('Ошибка удаления');}
+  try{
+    await dW(id);
+    words=words.filter(w=>w.id!==id);
+    wordsToCache(words);
+    renderDash();renderList();showSnack('Слово удалено');
+  }catch(ex){showSnack('Ошибка удаления');}
 }
 
 // ── SM-2 АЛГОРИТМ (как Anki) ──────────────────
@@ -1051,31 +1176,34 @@ function sm2(w, grade){
 }
 
 async function upScore(id, grade){
-  // grade: -1=не знал(0), 1=сомневался(1), 2=знал(2), 3=отлично(2 для FC)
   const w=words.find(x=>x.id===id);if(!w)return;
-  // Нормализуем grade → SM-2 grade (0,1,2)
   const g = grade<=0?0 : grade===1?1 : 2;
   const r = sm2(w, g);
   w.score=r.score; w.sm2_ef=r.sm2_ef; w.sm2_intv=r.sm2_intv; w.sm2_reps=r.sm2_reps;
   w.last_reviewed=new Date().toISOString();
   w.review_count=(w.review_count||0)+1;
   w.next_review=r.next_review;
+
+  // Обновляем SM-2 кэш немедленно (локальный)
+  try{
+    const sm2cache=JSON.parse(localStorage.getItem('lx_sm2')||'{}');
+    sm2cache[id]={ef:r.sm2_ef,intv:r.sm2_intv,reps:r.sm2_reps};
+    localStorage.setItem('lx_sm2',JSON.stringify(sm2cache));
+  }catch(_){}
+
+  // Обновляем кэш слов write-through (оптимистично, без ожидания БД)
+  wordsToCache(words);
+
+  // Пишем в БД асинхронно — не блокируем UI
   try{
     await upW(id,{
       score:r.score, next_review:r.next_review,
-      last_reviewed:w.last_reviewed, review_count:w.review_count,
-      // Сохраняем SM-2 данные в поле settings слова (используем JSON в en_lower не можем — храним в transcription нельзя)
-      // Храним в отдельных колонках если они есть, иначе пакуем в review_count как мета
-      // Реально: сохраняем ef и intv закодировав в next_review offset — уже сохранено выше
-      // sm2 данные сохраняем в localStorage как кэш
+      last_reviewed:w.last_reviewed, review_count:w.review_count
     });
-    // Кэшируем SM-2 состояние локально
-    try{
-      const cache=JSON.parse(localStorage.getItem('lx_sm2')||'{}');
-      cache[id]={ef:r.sm2_ef,intv:r.sm2_intv,reps:r.sm2_reps};
-      localStorage.setItem('lx_sm2',JSON.stringify(cache));
-    }catch(_){}
-  }catch(ex){}
+  }catch(ex){
+    // БД недоступна — данные уже в кэше, потеряются при следующей полной загрузке
+    console.warn('upScore: DB write failed, cached locally', ex.message);
+  }
 }
 
 // Загружаем SM-2 кэш в объекты слов после loadWords
@@ -1170,8 +1298,10 @@ function _renderListPage(reset){
         <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}
         ${transHtml}
       </div>
-      <button class="speak-btn" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>
-      <span class="badge ${c}">${l}</span>
+      <div class="wi-right">
+        <button class="speak-btn" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>
+        <span class="badge ${c}">${l}</span>
+      </div>
     </div>`;
   }).join('');
   const moreBtn=hasMore
@@ -1251,6 +1381,7 @@ async function saveWordEdit(id){
   try{
     await upW(id,{en,ru,transcription:tr});
     const w=words.find(x=>x.id===id);if(w){w.en=en;w.ru=ru;w.transcription=tr;}
+    wordsToCache(words);
     inEditMode=false;renderModalView(id);renderList();
     document.getElementById('modal-edit-btn').textContent='✏️';
     showSnack('✓ Сохранено');
@@ -1758,9 +1889,12 @@ function confirmResetStats(){
       for(let i=0;i<toReset.length;i+=CHUNK){
         const chunk=toReset.slice(i,i+CHUNK);
         await Promise.allSettled(chunk.map(w=>upW(w.id,{score:0,next_review:new Date().toISOString(),review_count:0,last_reviewed:null})));
-        chunk.forEach(w=>{w.score=0;w.review_count=0;w.next_review=new Date().toISOString();w.last_reviewed=null;});
+        chunk.forEach(w=>{w.score=0;w.review_count=0;w.next_review=new Date().toISOString();w.last_reviewed=null;w.sm2_ef=undefined;w.sm2_intv=undefined;w.sm2_reps=undefined;});
       }
-      dDone=0;
+      // Чистим SM-2 кэш и обновляем кэш слов
+      try{localStorage.removeItem('lx_sm2');}catch(_){}
+      wordsToCache(words);
+      dDone=0;saveDailyDone(0);
       renderDash();renderList();
       showSnack('✓ Прогресс сброшен');
     }
