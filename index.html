@@ -21,6 +21,15 @@
   --r:10px;--r-lg:16px;--r-xl:20px;
   --hh:56px;--nh:64px;
 }
+[data-theme=dark]{
+  --bg:#0f0f11;--card:#1a1a1e;--card2:#222228;--border:#2a2a32;--border2:#38383f;
+  --txt:#f0ede6;--txt2:#9c9aa4;--muted:#55555f;
+  --acc:#a8d86e;--acc-bg:rgba(168,216,110,.13);--acc-light:rgba(168,216,110,.30);
+  --warn:#f0c060;--warn-bg:rgba(240,192,96,.13);
+  --danger:#f07878;--danger-bg:rgba(240,120,120,.13);
+  --good:#6ed8a0;--good-bg:rgba(110,216,160,.13);
+  --sh:0 1px 4px rgba(0,0,0,.4);--sh-md:0 4px 16px rgba(0,0,0,.5);
+}
 html,body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased;font-size:14px;}
 .screen{display:none;}.screen.active{display:block;}
 
@@ -324,6 +333,25 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   .fc-word,.q-word,.t-question{font-size:34px;}
   .choices,.practice-modes{grid-template-columns:1fr;}
 }
+/* SCROLL TO TOP */
+.scroll-top-btn{position:fixed;bottom:calc(var(--nh)+16px);right:16px;z-index:150;width:40px;height:40px;border-radius:50%;background:var(--acc);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:var(--sh-md);display:none;align-items:center;justify-content:center;transition:opacity .2s;}
+.scroll-top-btn.visible{display:flex;}
+/* SWIPE HINT in session */
+.swipe-hint{font-size:11px;color:var(--muted);text-align:center;margin-top:10px;letter-spacing:.04em;}
+/* AUTO-TRANSLATE */
+.autotrans-row{display:flex;align-items:center;gap:8px;margin-top:6px;min-height:24px;}
+.autotrans-pill{font-size:12px;color:var(--acc);background:var(--acc-bg);border:1px solid var(--acc-light);border-radius:20px;padding:3px 10px;cursor:pointer;transition:background .12s;}
+.autotrans-pill:hover{background:var(--acc-light);}
+.autotrans-loading{font-size:12px;color:var(--muted);}
+/* THEME TOGGLE in header */
+.theme-btn{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);color:var(--txt2);width:32px;height:32px;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.theme-btn:hover{background:var(--card2);}
+/* DARK: streak badge fix */
+[data-theme=dark] .streak-badge{background:rgba(240,160,60,.15);border-color:rgba(240,160,60,.35);color:#f0a03c;}
+[data-theme=dark] .goal-card{background:linear-gradient(135deg,#1e3a28,#2a5238);}
+[data-theme=dark] select{background-color:var(--card);}
+/* SM2 interval label in modal */
+.sm2-interval{font-size:11px;color:var(--muted);margin-top:4px;}
 </style>
 </head>
 <body>
@@ -350,6 +378,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="header-meta">
       <div class="streak-badge">🔥 <span id="streak-count">0</span></div>
       <span id="header-username" class="header-username"></span>
+      <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Сменить тему">🌙</button>
       <button class="icon-btn" onclick="logout()" title="Выйти">⎋</button>
     </div>
   </header>
@@ -414,7 +443,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div id="tab-words" class="tab-content">
     <div class="add-section">
       <div class="add-fields">
-        <input id="inp-en" type="text" placeholder="English word" onkeydown="if(event.key==='Enter')document.querySelector('#trans-rows .trans-row input').focus()"/>
+        <input id="inp-en" type="text" placeholder="English word" oninput="onEnInput()" onkeydown="if(event.key==='Enter')document.querySelector('#trans-rows .trans-row input').focus()"/>
+        <div class="autotrans-row" id="autotrans-row"></div>
         <div class="field-group">
           <label style="font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:500;">Переводы</label>
           <div id="trans-rows" class="translations-wrap">
@@ -530,6 +560,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       </div>
     </div>
     <div class="settings-section">
+      <div class="settings-title">Внешний вид</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Тёмная тема</div>
+          <div class="setting-desc">Тёмный фон, светлый текст</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="set-dark-theme" onchange="setTheme(this.checked?'dark':'light',true)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="settings-section">
       <div class="settings-title">Произношение</div>
       <div class="setting-row">
         <div>
@@ -598,6 +641,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <!-- TOAST -->
 <div class="toast-wrap" id="toast-wrap" style="display:none"></div>
 
+<!-- SCROLL TO TOP -->
+<button class="scroll-top-btn" id="scroll-top-btn" onclick="scrollToTop()" title="Наверх">↑</button>
+
 <!-- CONFIRM -->
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-card">
@@ -613,8 +659,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <script>
 // ── STATE ─────────────────────────────────────
 let CU=null,words=[],wF='all',dir='en';
-// sortAZ: null = оригинальный порядок, true = A→Z, false = Z→A
 let sortAZ=null;
+let listPage=0;
 let sM=null,sW=[],sI=0,sS=0,sMist=[];
 let fcR=false,chA=false,mSt={},mTmr=null,mSec=0;
 let sessionTimerInterval=null,sessionTimeLeft=0;
@@ -807,6 +853,11 @@ function loadSettings(){
     const tty=document.getElementById('timer-ty');if(tty)tty.checked=tm.ty!==false;
     const tma=document.getElementById('timer-ma');if(tma)tma.checked=!!tm.ma;
     const sas=document.getElementById('set-auto-speak');if(sas)sas.checked=settings.auto_speak!==false;
+    // Тема — приоритет: настройки пользователя > localStorage
+    if(settings.dark_theme!==undefined){
+      setTheme(settings.dark_theme?'dark':'light',false);
+      localStorage.setItem('lx_theme',settings.dark_theme?'dark':'light');
+    }
   });
 }
 function toggleTimerSettings(val){
@@ -879,7 +930,11 @@ function getWordTranslations(w){
 // ── WORDS ─────────────────────────────────────
 async function loadWords(){
   document.getElementById('wlist').innerHTML='<div class="loading">Загрузка...</div>';
-  try{words=await gW(CU.id)||[];renderDash();renderList();}
+  try{
+    words=await gW(CU.id)||[];
+    loadSM2Cache();
+    listPage=0;renderDash();renderList();
+  }
   catch(ex){document.getElementById('wlist').innerHTML='<div class="empty">Ошибка загрузки</div>';}
 }
 
@@ -967,10 +1022,70 @@ async function deleteWord(id){
   catch(ex){showSnack('Ошибка удаления');}
 }
 
-async function upScore(id,d){
+// ── SM-2 АЛГОРИТМ (как Anki) ──────────────────
+// grade: 0=не знал, 1=сомневался, 2=знал (для flashcard)
+// grade: 0=неверно, 2=верно (для choice/typing)
+// Возвращает {score, easiness, interval, next_review}
+function sm2(w, grade){
+  // Извлекаем накопленные SM-2 данные из слова
+  let ef   = parseFloat(w.sm2_ef   ||'2.5'); // easiness factor
+  let intv = parseInt  (w.sm2_intv ||'0');    // интервал в минутах
+  let reps = parseInt  (w.sm2_reps ||'0');    // кол-во успешных повторений подряд
+
+  if(grade>=1){ // ответил верно (или почти)
+    if(reps===0)      intv=10;          // 10 минут
+    else if(reps===1) intv=1440;        // 1 день
+    else              intv=Math.round(intv*(ef/100));
+    reps++;
+    // Корректируем EF: grade 2=отлично(+0), grade 1=неуверенно(-0.14), grade 0=плохо(-0.32)
+    const q=grade===2?5:grade===1?4:3; // переводим grade→качество SM-2 (3-5)
+    ef=Math.max(130,Math.round(ef+(0.1-(5-q)*(0.08+(5-q)*0.02))*100));
+  } else { // grade===0: не знал → сбрасываем
+    reps=0;intv=1; // 1 минута
+    ef=Math.max(130,ef-20);
+  }
+  const next_review=new Date(Date.now()+intv*60000).toISOString();
+  // score: 0-6 для совместимости с UI (визуальный индикатор)
+  const score=reps===0?0:reps===1?1:reps<=3?2:reps<=5?4:6;
+  return{score,sm2_ef:ef,sm2_intv:intv,sm2_reps:reps,next_review};
+}
+
+async function upScore(id, grade){
+  // grade: -1=не знал(0), 1=сомневался(1), 2=знал(2), 3=отлично(2 для FC)
   const w=words.find(x=>x.id===id);if(!w)return;
-  const ns=Math.max(0,Math.min(6,(w.score||0)+d));w.score=ns;w.last_reviewed=new Date().toISOString();w.review_count=(w.review_count||0)+1;w.next_review=nxtR(ns);
-  try{await upW(id,{score:ns,last_reviewed:w.last_reviewed,review_count:w.review_count,next_review:w.next_review});}catch(ex){}
+  // Нормализуем grade → SM-2 grade (0,1,2)
+  const g = grade<=0?0 : grade===1?1 : 2;
+  const r = sm2(w, g);
+  w.score=r.score; w.sm2_ef=r.sm2_ef; w.sm2_intv=r.sm2_intv; w.sm2_reps=r.sm2_reps;
+  w.last_reviewed=new Date().toISOString();
+  w.review_count=(w.review_count||0)+1;
+  w.next_review=r.next_review;
+  try{
+    await upW(id,{
+      score:r.score, next_review:r.next_review,
+      last_reviewed:w.last_reviewed, review_count:w.review_count,
+      // Сохраняем SM-2 данные в поле settings слова (используем JSON в en_lower не можем — храним в transcription нельзя)
+      // Храним в отдельных колонках если они есть, иначе пакуем в review_count как мета
+      // Реально: сохраняем ef и intv закодировав в next_review offset — уже сохранено выше
+      // sm2 данные сохраняем в localStorage как кэш
+    });
+    // Кэшируем SM-2 состояние локально
+    try{
+      const cache=JSON.parse(localStorage.getItem('lx_sm2')||'{}');
+      cache[id]={ef:r.sm2_ef,intv:r.sm2_intv,reps:r.sm2_reps};
+      localStorage.setItem('lx_sm2',JSON.stringify(cache));
+    }catch(_){}
+  }catch(ex){}
+}
+
+// Загружаем SM-2 кэш в объекты слов после loadWords
+function loadSM2Cache(){
+  try{
+    const cache=JSON.parse(localStorage.getItem('lx_sm2')||'{}');
+    words.forEach(w=>{
+      if(cache[w.id]){w.sm2_ef=cache[w.id].ef;w.sm2_intv=cache[w.id].intv;w.sm2_reps=cache[w.id].reps;}
+    });
+  }catch(_){}
 }
 
 // ── SELECT / SORT / FILTER ────────────────────
@@ -1027,10 +1142,21 @@ function confirmClearAll(){
   showConfirm('Очистить весь словарь?','Все слова будут удалены безвозвратно.',()=>deleteWords(words.map(w=>w.id)));
 }
 
+// ── PAGINATION ────────────────────────────────
+const PAGE_SIZE=50;
+
 function renderList(){
-  const el=document.getElementById('wlist'),list=getFilt();
+  listPage=0;
+  _renderListPage(true);
+}
+
+function _renderListPage(reset){
+  const el=document.getElementById('wlist');
+  const list=getFilt();
   if(!list.length){el.innerHTML='<div class="empty">Нет слов в этой категории</div>';return;}
-  el.innerHTML=list.map(w=>{
+  const slice=list.slice(0,PAGE_SIZE*(listPage+1));
+  const hasMore=list.length>slice.length;
+  const html=slice.map(w=>{
     const s=w.score||0;let c='b-new',l='Новое';
     if(s>=6){c='b-know';l='Знаю';}else if(s>=2){c='b-learn';l='Учу';}
     const sel=selectedWords.has(w.id);
@@ -1048,6 +1174,15 @@ function renderList(){
       <span class="badge ${c}">${l}</span>
     </div>`;
   }).join('');
+  const moreBtn=hasMore
+    ?`<div style="text-align:center;padding:1rem 0"><button class="btn" onclick="loadMoreWords()">Показать ещё (${list.length-slice.length})</button></div>`
+    :'';
+  el.innerHTML=html+moreBtn;
+}
+
+function loadMoreWords(){
+  listPage++;
+  _renderListPage(false);
 }
 
 // ── WORD MODAL ────────────────────────────────
@@ -1187,11 +1322,113 @@ function startSession(mode,pool){
 }
 
 function closeSession(){
+  // Подтверждение если сессия в процессе (не на экране результата)
+  const isResult=document.querySelector('.result');
+  if(!isResult && sI>0 && sI<sW.length){
+    showConfirm('Выйти из сессии?','Прогресс текущей сессии не сохранится.',()=>{_doCloseSession();});
+    return;
+  }
+  _doCloseSession();
+}
+function _doCloseSession(){
   if(mTmr){clearInterval(mTmr);mTmr=null;}
   if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
+  window.speechSynthesis?.cancel();
   document.getElementById('session-overlay').classList.remove('active');
   renderDash();renderList();
 }
+
+// ── СВАЙПЫ В СЕССИИ ───────────────────────────
+(function initSwipe(){
+  let tx=0,ty=0,startT=0;
+  document.addEventListener('touchstart',ev=>{
+    const ov=document.getElementById('session-overlay');
+    if(!ov.classList.contains('active'))return;
+    tx=ev.touches[0].clientX;ty=ev.touches[0].clientY;startT=Date.now();
+  },{passive:true});
+  document.addEventListener('touchend',ev=>{
+    const ov=document.getElementById('session-overlay');
+    if(!ov.classList.contains('active'))return;
+    if(document.querySelector('.result'))return; // на экране результата свайп не работает
+    const dx=ev.changedTouches[0].clientX-tx;
+    const dy=ev.changedTouches[0].clientY-ty;
+    const dt=Date.now()-startT;
+    if(Math.abs(dx)<40||Math.abs(dy)>Math.abs(dx)||dt>500)return; // не свайп
+    if(sM==='flashcard'){
+      if(!fcR){rvFC();return;} // свайп любой стороной — открыть карточку
+      if(dx>0){fcRt(sW[sI].id,3);}      // свайп вправо = знал ✓
+      else    {fcRt(sW[sI].id,-1);}     // свайп влево = не знал
+    } else if(sM==='choice'||sM==='typing'){
+      // В этих режимах свайп влево = пропустить (если ещё не ответил)
+      if(dx<0&&!chA&&sM==='choice'){sI++;renderCard();}
+    }
+  },{passive:true});
+})();
+
+// ── SCROLL TO TOP ─────────────────────────────
+window.addEventListener('scroll',()=>{
+  const btn=document.getElementById('scroll-top-btn');
+  if(!btn)return;
+  btn.classList.toggle('visible',window.scrollY>300);
+},{ passive:true });
+function scrollToTop(){window.scrollTo({top:0,behavior:'smooth'});}
+
+// ── АВТО-ПЕРЕВОД ──────────────────────────────
+let _atTimer=null;
+function onEnInput(){
+  clearTimeout(_atTimer);
+  const val=document.getElementById('inp-en').value.trim();
+  const row=document.getElementById('autotrans-row');
+  if(!val||val.length<2){row.innerHTML='';return;}
+  row.innerHTML='<span class="autotrans-loading">перевожу...</span>';
+  _atTimer=setTimeout(()=>fetchTranslation(val),600);
+}
+async function fetchTranslation(word){
+  const row=document.getElementById('autotrans-row');
+  try{
+    const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|ru`);
+    const j=await r.json();
+    if(j.responseStatus!==200||!j.responseData?.translatedText){row.innerHTML='';return;}
+    const trans=j.responseData.translatedText;
+    // Дополнительные варианты из matches
+    const alts=[...new Set([trans,...(j.matches||[]).slice(0,4).map(m=>m.translation)])].filter(Boolean).slice(0,3);
+    row.innerHTML=alts.map(t=>`<span class="autotrans-pill" onclick="applyTranslation('${e(t).replace(/'/g,"\\'")}')">+ ${e(t)}</span>`).join('');
+  }catch(_){row.innerHTML='';}
+}
+function applyTranslation(t){
+  const firstInput=document.querySelector('#trans-rows .trans-row input');
+  if(firstInput&&!firstInput.value.trim()){firstInput.value=t;}
+  else{
+    // Добавляем новую строку перевода
+    addTransRow();
+    const rows=document.querySelectorAll('#trans-rows .trans-row input');
+    rows[rows.length-1].value=t;
+  }
+  document.getElementById('autotrans-row').innerHTML='';
+}
+
+// ── ТЕМА ─────────────────────────────────────
+function setTheme(theme, save){
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn=document.getElementById('theme-btn');
+  if(btn)btn.textContent=theme==='dark'?'☀️':'🌙';
+  const chk=document.getElementById('set-dark-theme');
+  if(chk)chk.checked=theme==='dark';
+  if(save){
+    settings.dark_theme=theme==='dark';
+    uU(CU.id,{settings:JSON.stringify(settings)});
+    localStorage.setItem('lx_theme',theme);
+  }
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')||'light';
+  setTheme(cur==='dark'?'light':'dark',true);
+}
+// Применяем тему при загрузке (до авторизации — из localStorage)
+(function applyStoredTheme(){
+  const t=localStorage.getItem('lx_theme');
+  if(t)setTheme(t,false);
+})();
 
 function startQTimer(onExpire){
   if(!isTimerActive(sM))return;
@@ -1255,12 +1492,20 @@ function rFC(w){
       <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button>
       <button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button>
       <button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button>
-    </div>`;
+    </div>
+    ${(parseInt(localStorage.getItem('lx_fc_count')||'0')<5)?'<div class="swipe-hint">← свайп влево = не знал · вправо = знал →</div>':''}`;
     if(d==='en'&&settings.auto_speak!==false)speak(w.en);
+    // Считаем показы для скрытия подсказки
+    localStorage.setItem('lx_fc_count',Math.min(99,(parseInt(localStorage.getItem('lx_fc_count')||'0')+1)));
   }
 }
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
-async function fcRt(id,d){if(d>0){sS++;dDone++;saveDailyDone(dDone);}else sMist.push(sW[sI]);await upScore(id,d);fcR=false;sI++;renderCard();}
+async function fcRt(id,grade){
+  // grade: -1=не знал→0, 1=сомневался→1, 3=знал→2
+  const g=grade<=0?0:grade===1?1:2;
+  if(g>0){sS++;dDone++;saveDailyDone(dDone);}else sMist.push(sW[sI]);
+  await upScore(id,grade);fcR=false;sI++;renderCard();
+}
 
 // CHOICE — правильный любой перевод из списка
 function rCH(w){
@@ -1448,22 +1693,25 @@ async function selM(lang,id){
       document.getElementById('me'+id).disabled=true;
       document.getElementById('mr'+id).disabled=true;
       mSt.matched.push(id);
-      await upScore(id,1);dDone++;saveDailyDone(dDone);
+      // SM-2: grade зависит от количества ошибок по этой паре
+      const errs=mSt.errors?.[id]||0;
+      const grade=errs===0?2:errs===1?1:0;
+      await upScore(id,grade===2?2:grade===1?1:-1);
+      dDone++;saveDailyDone(dDone);
       msg.textContent='✓ Верно!';
-      // Обновляем прогресс-бар
-      sI=mSt.matched.length;
-      updP();
+      sI=mSt.matched.length;updP();
       if(mSt.matched.length===mSt.pairs.length){
         clearInterval(mTmr);mTmr=null;
-        sS=mSt.pairs.length;
-        sI=mSt.pairs.length;
-        updP();
+        sS=mSt.pairs.length;sI=mSt.pairs.length;updP();
         setTimeout(showRes,600);
       }
     }else{
       const eb=document.getElementById('me'+sid),rb=document.getElementById('mr'+id);
       eb.classList.add('m-err');rb.classList.add('m-err');
       msg.textContent='Не то, попробуй снова';
+      // Считаем ошибки по паре sid (английское слово)
+      if(!mSt.errors)mSt.errors={};
+      mSt.errors[sid]=(mSt.errors[sid]||0)+1;
       setTimeout(()=>{eb.classList.remove('m-err');rb.classList.remove('m-err');msg.textContent='';},700);
     }
   }
