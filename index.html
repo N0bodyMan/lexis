@@ -249,7 +249,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .hint-link{font-size:12px;color:var(--acc);cursor:pointer;font-weight:500;}
 .hint-link:hover{text-decoration:underline;}
 /* SPEAK BUTTON */
-.speak-btn{background:none;border:none;cursor:pointer;font-size:18px;padding:2px 4px;line-height:1;opacity:.55;transition:opacity .15s;flex-shrink:0;}
+.speak-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1;opacity:.5;transition:opacity .15s;flex-shrink:0;align-self:flex-start;margin-top:6px;}
 .speak-btn:hover{opacity:1;}
 .speak-btn.speaking{opacity:1;animation:speakPulse .6s ease-in-out infinite alternate;}
 @keyframes speakPulse{from{transform:scale(1);}to{transform:scale(1.25);}}
@@ -530,6 +530,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       </div>
     </div>
     <div class="settings-section">
+      <div class="settings-title">Произношение</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Автовоспроизведение в сессии</div>
+          <div class="setting-desc">Озвучивать слово при показе карточки</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="set-auto-speak" onchange="saveSetting('auto_speak',this.checked)"/>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+    <div class="settings-section">
       <div class="settings-title">Сброс данных</div>
       <div class="setting-row">
         <div>
@@ -603,12 +616,50 @@ let CU=null,words=[],wF='all',dir='en';
 // sortAZ: null = оригинальный порядок, true = A→Z, false = Z→A
 let sortAZ=null;
 let sM=null,sW=[],sI=0,sS=0,sMist=[];
-let fcR=false,chA=false,mSt={},mTmr=null,mSec=0,dDone=0;
+let fcR=false,chA=false,mSt={},mTmr=null,mSec=0;
 let sessionTimerInterval=null,sessionTimeLeft=0;
 let selectedWords=new Set();
 let currentModalWordId=null,inEditMode=false;
 let confirmCallback=null;
-let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:30,timer_modes:{fc:false,ch:true,ty:true,ma:false}};
+
+// ── ДНЕВНОЙ СЧЁТЧИК ───────────────────────────
+// Хранится в localStorage, сбрасывается в полночь по МСК (UTC+3)
+function getMskDateStr(){
+  // Текущая дата в московском часовом поясе (UTC+3)
+  const msk=new Date(Date.now()+3*3600000);
+  return msk.toISOString().slice(0,10); // "YYYY-MM-DD"
+}
+function loadDailyDone(){
+  try{
+    const raw=localStorage.getItem('lx_daily');
+    if(!raw)return 0;
+    const {date,done}=JSON.parse(raw);
+    return date===getMskDateStr()?done:0;
+  }catch(e){return 0;}
+}
+function saveDailyDone(val){
+  localStorage.setItem('lx_daily',JSON.stringify({date:getMskDateStr(),done:val}));
+}
+let dDone=loadDailyDone();
+
+// Планируем сброс счётчика в полночь МСК
+function scheduleMidnightReset(){
+  const now=new Date();
+  // Полночь МСК = UTC 21:00 текущего дня (или следующего если уже прошло)
+  const mskNow=new Date(Date.now()+3*3600000);
+  const nextMidnightMsk=new Date(Date.UTC(
+    mskNow.getUTCFullYear(),mskNow.getUTCMonth(),mskNow.getUTCDate()+1,
+    0,0,0 // 00:00 МСК = 21:00 UTC предыдущего дня → считаем как UTC 21:00
+  )-3*3600000); // вычитаем +3ч чтобы получить UTC момент полуночи МСК
+  const ms=nextMidnightMsk-now;
+  setTimeout(()=>{
+    dDone=0;saveDailyDone(0);
+    renderDash();
+    scheduleMidnightReset(); // планируем следующий сброс
+  },ms);
+}
+scheduleMidnightReset();
+let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:30,timer_modes:{fc:false,ch:true,ty:true,ma:false},auto_speak:true};
 
 // ── TELEGRAM ──────────────────────────────────
 window.Telegram?.WebApp?.ready();
@@ -701,7 +752,7 @@ async function lok(u){
 }
 
 function logout(){
-  CU=null;words=[];dDone=0;selectedWords.clear();
+  CU=null;words=[];dDone=0;saveDailyDone(0);selectedWords.clear();
   localStorage.removeItem('lx');
   document.getElementById('screen-app').classList.remove('active');
   document.getElementById('screen-auth').classList.add('active');
@@ -755,6 +806,7 @@ function loadSettings(){
     const tch=document.getElementById('timer-ch');if(tch)tch.checked=tm.ch!==false;
     const tty=document.getElementById('timer-ty');if(tty)tty.checked=tm.ty!==false;
     const tma=document.getElementById('timer-ma');if(tma)tma.checked=!!tm.ma;
+    const sas=document.getElementById('set-auto-speak');if(sas)sas.checked=settings.auto_speak!==false;
   });
 }
 function toggleTimerSettings(val){
@@ -1007,9 +1059,9 @@ function renderModalView(id){
   const s=w.score||0,pct=Math.round((s/6)*100),rev=w.last_reviewed?new Date(w.last_reviewed).toLocaleDateString('ru-RU'):'никогда';
   const trans=getWordTranslations(w);
   document.getElementById('modal-body').innerHTML=`
-    <div style="display:flex;align-items:baseline;gap:8px">
+    <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
       <div class="modal-word">${e(w.en)}</div>
-      <button class="speak-btn" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать произношение">🔊</button>
+      <button class="speak-btn" style="margin-top:10px" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать произношение">🔊</button>
     </div>
     ${w.transcription?`<div class="modal-tr">[${e(w.transcription)}]</div>`:''}
     <div class="modal-translations">${trans.map(t=>`<span class="modal-trans-pill">${e(t)}</span>`).join('')}</div>
@@ -1179,18 +1231,36 @@ function rFC(w){
     :`<div class="fc-answer">${e(Array.isArray(a)?a[0]:a)}</div>`;
   const sb=document.getElementById('sbody');
   if(!fcR){
-    sb.innerHTML=`<div class="fc-card" onclick="rvFC()"><span class="fc-hint">Нажми чтобы открыть</span><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}</div>`;
-    if(d==='en')setTimeout(()=>speak(w.en),120);
-    // Таймер на карточку — если включён, автоматически переворачивает
+    sb.innerHTML=`<div class="fc-card" onclick="rvFC()">
+      <span class="fc-hint">Нажми чтобы открыть</span>
+      <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
+        <div class="fc-word">${e(q)}</div>
+        ${d==='en'?`<button class="speak-btn" style="margin-top:12px" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
+      </div>
+      ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
+    </div>`;
+    if(d==='en'&&settings.auto_speak!==false)setTimeout(()=>speak(w.en),120);
     startQTimer(()=>{rvFC();});
   }else{
     stopQTimer();
-    sb.innerHTML=`<div class="fc-card" style="cursor:default"><div class="fc-word">${e(q)}</div>${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}${aHtml}</div><div class="rate-row"><button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button><button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button><button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button></div>`;
-    if(d==='en')speak(w.en);
+    sb.innerHTML=`<div class="fc-card" style="cursor:default">
+      <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
+        <div class="fc-word">${e(q)}</div>
+        ${d==='en'?`<button class="speak-btn" style="margin-top:12px" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
+      </div>
+      ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
+      ${aHtml}
+    </div>
+    <div class="rate-row">
+      <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button>
+      <button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button>
+      <button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button>
+    </div>`;
+    if(d==='en'&&settings.auto_speak!==false)speak(w.en);
   }
 }
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
-async function fcRt(id,d){if(d>0){sS++;dDone++;}else sMist.push(sW[sI]);await upScore(id,d);fcR=false;sI++;renderCard();}
+async function fcRt(id,d){if(d>0){sS++;dDone++;saveDailyDone(dDone);}else sMist.push(sW[sI]);await upScore(id,d);fcR=false;sI++;renderCard();}
 
 // CHOICE — правильный любой перевод из списка
 function rCH(w){
@@ -1208,13 +1278,13 @@ function rCH(w){
   document.getElementById('sbody').innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:.5rem">
       <div class="q-word" style="margin-bottom:0">${e(q)}</div>
-      ${d==='en'?`<button class="speak-btn" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
+      ${d==='en'?`<button class="speak-btn" style="margin-top:8px" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
     </div>
     ${w.transcription&&d==='en'?`<div class="q-transcription">[${e(w.transcription)}]</div>`:''}
     <div class="choices">${opts.map(o=>`<button class="ch-btn" id="co${o.id}-${o.correct?'ok':'no'}" onclick="aCH(${w.id},'${o.id}',${o.correct})">${e(o.t)}</button>`).join('')}</div>
     <div id="we2" class="wrong-explain"></div>
     <div class="next-wrap" id="nxt"><button class="btn solid" onclick="nCH()">Далее →</button></div>`;
-  if(d==='en')speak(w.en);
+  if(d==='en'&&settings.auto_speak!==false)speak(w.en);
   startQTimer(()=>{if(!chA)aCH(w.id,-1,false,true);});
 }
 async function aCH(wid, optId, isCorrect, timedOut){
@@ -1235,7 +1305,7 @@ async function aCH(wid, optId, isCorrect, timedOut){
     const ex=document.getElementById('we2');ex.style.display='block';
     const allTrans=getDir()==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
     ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+allTrans.join(' / ');
-  }else{sS++;dDone++;}
+  }else{sS++;dDone++;saveDailyDone(dDone);}
   await upScore(wid,ok?2:-1);
   document.getElementById('nxt').style.display='block';
 }
@@ -1266,7 +1336,7 @@ function rTY(w){
   sb.innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:.5rem">
       <div class="t-question" style="margin-bottom:0">${e(q)}</div>
-      ${d==='ru'?`<button class="speak-btn" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
+      <button class="speak-btn" style="margin-top:8px" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>
     </div>
     ${showTr?`<div class="t-transcription">[${e(w.transcription)}]</div>`:''}
     <div class="t-input-row">
@@ -1278,7 +1348,7 @@ function rTY(w){
       <span class="skip-link" onclick="sI++;renderCard()">Пропустить</span>
       <span class="hint-link" onclick="showHint()">Подсказка 💡</span>
     </div>`;
-  if(d==='ru')speak(w.en);
+  if(settings.auto_speak!==false)speak(w.en);
   setTimeout(()=>{const i=document.getElementById('tyi');if(i)i.focus();},50);
   startQTimer(()=>{
     const res=document.getElementById('tyr');
@@ -1322,10 +1392,10 @@ async function chkTY(){
   const primaryCorrect=d==='en'?getPrimary(w):w.en;
   if(r==='ok'){
     res.className='t-result t-ok';res.textContent='✓ Верно!';
-    sS++;dDone++;await upScore(wid,2);sI++;setTimeout(renderCard,1200);
+    sS++;dDone++;saveDailyDone(dDone);await upScore(wid,2);sI++;setTimeout(renderCard,1200);
   }else if(r==='near'){
     res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+primaryCorrect;
-    await upScore(wid,1);dDone++;sI++;setTimeout(renderCard,1800);
+    await upScore(wid,1);dDone++;saveDailyDone(dDone);sI++;setTimeout(renderCard,1800);
   }else{
     res.className='t-result t-fail';res.textContent='✗ '+primaryCorrect;
     sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);
@@ -1378,7 +1448,7 @@ async function selM(lang,id){
       document.getElementById('me'+id).disabled=true;
       document.getElementById('mr'+id).disabled=true;
       mSt.matched.push(id);
-      await upScore(id,1);dDone++;
+      await upScore(id,1);dDone++;saveDailyDone(dDone);
       msg.textContent='✓ Верно!';
       // Обновляем прогресс-бар
       sI=mSt.matched.length;
