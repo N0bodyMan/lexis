@@ -236,13 +236,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* FLASHCARD */
 .fc-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:2.5rem 2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;cursor:pointer;transition:all .15s;min-height:220px;margin-bottom:1.25rem;box-shadow:var(--sh-md);}
 .fc-card:hover{border-color:var(--acc);}
-.fc-word{font-family:'Playfair Display',serif;font-size:48px;color:var(--txt);line-height:1.1;}
+.fc-word{font-family:'Playfair Display',serif;font-size:48px;color:var(--txt);line-height:1.1;word-break:break-word;overflow-wrap:anywhere;max-width:100%;}
 .fc-transcription{font-size:13px;color:var(--muted);}
 .fc-hint{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
 .fc-answer{font-size:22px;color:var(--acc);font-weight:600;}
 .fc-answer-pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px;}
 .fc-answer-pill{background:var(--acc-bg);border:1px solid var(--acc-light);border-radius:20px;padding:4px 12px;font-size:15px;color:var(--acc);font-weight:500;}
 .rate-row{display:flex;gap:8px;}
+/* Адаптивный шрифт для очень длинных слов */
+@media(max-width:400px){.fc-word{font-size:36px;}}
+/* Свайп-подсказка */
+.swipe-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;padding:7px 14px;background:var(--card2);border:1px solid var(--border);border-radius:20px;letter-spacing:.02em;}
 .rate-row .btn{flex:1;padding:13px 8px;}
 
 /* CHOICE */
@@ -681,39 +685,58 @@ let currentModalWordId=null,inEditMode=false;
 let confirmCallback=null;
 
 // ── ДНЕВНОЙ СЧЁТЧИК ───────────────────────────
-// Хранится в localStorage, сбрасывается в полночь по МСК (UTC+3)
+// Считает УНИКАЛЬНЫЕ слова за день (не количество ответов)
+// Сбрасывается в полночь по МСК (UTC+3)
 function getMskDateStr(){
-  // Текущая дата в московском часовом поясе (UTC+3)
   const msk=new Date(Date.now()+3*3600000);
-  return msk.toISOString().slice(0,10); // "YYYY-MM-DD"
+  return msk.toISOString().slice(0,10);
 }
-function loadDailyDone(){
+function loadDailyData(){
   try{
     const raw=localStorage.getItem('lx_daily');
-    if(!raw)return 0;
-    const {date,done}=JSON.parse(raw);
-    return date===getMskDateStr()?done:0;
-  }catch(e){return 0;}
+    if(!raw)return{date:getMskDateStr(),ids:[]};
+    const obj=JSON.parse(raw);
+    if(obj.date!==getMskDateStr())return{date:getMskDateStr(),ids:[]};
+    return obj;
+  }catch(e){return{date:getMskDateStr(),ids:[]};}
 }
-function saveDailyDone(val){
-  localStorage.setItem('lx_daily',JSON.stringify({date:getMskDateStr(),done:val}));
+function saveDailyData(){
+  try{
+    localStorage.setItem('lx_daily',JSON.stringify({
+      date:getMskDateStr(),
+      ids:[...dailySeenIds]
+    }));
+  }catch(_){}
 }
-let dDone=loadDailyDone();
+// Обратная совместимость — saveDailyDone больше не нужна, но оставляем заглушку
+function saveDailyDone(){}
 
-// Планируем сброс счётчика в полночь МСК
+const _dailyData=loadDailyData();
+let dailySeenIds=new Set(_dailyData.ids||[]);
+let dDone=dailySeenIds.size;
+
+// Добавить слово в дневной счётчик
+function markDailyWord(wordId){
+  if(!wordId)return;
+  dailySeenIds.add(String(wordId));
+  dDone=dailySeenIds.size;
+  saveDailyData();
+}
+
+// Сброс в полночь МСК
 function scheduleMidnightReset(){
   const now=new Date();
-  // Полночь МСК = UTC 21:00 текущего дня (или следующего если уже прошло)
   const mskNow=new Date(Date.now()+3*3600000);
   const nextMidnightMsk=new Date(Date.UTC(
-    mskNow.getUTCFullYear(),mskNow.getUTCMonth(),mskNow.getUTCDate()+1,
-    0,0,0 // 00:00 МСК = 21:00 UTC предыдущего дня → считаем как UTC 21:00
-  )-3*3600000); // вычитаем +3ч чтобы получить UTC момент полуночи МСК
+    mskNow.getUTCFullYear(),mskNow.getUTCMonth(),mskNow.getUTCDate()+1,0,0,0
+  )-3*3600000);
   const ms=nextMidnightMsk-now;
   setTimeout(()=>{
-    dDone=0;saveDailyDone(0);
+    dailySeenIds=new Set();
+    dDone=0;
+    saveDailyData();
     renderDash();
-    scheduleMidnightReset(); // планируем следующий сброс
+    scheduleMidnightReset();
   },ms);
 }
 scheduleMidnightReset();
@@ -811,7 +834,8 @@ async function lok(u){
 
 function logout(){
   clearWordsCache();
-  CU=null;words=[];dDone=0;saveDailyDone(0);selectedWords.clear();
+  dailySeenIds=new Set();dDone=0;saveDailyData();
+  CU=null;words=[];selectedWords.clear();
   localStorage.removeItem('lx');
   document.getElementById('screen-app').classList.remove('active');
   document.getElementById('screen-auth').classList.add('active');
@@ -1527,13 +1551,27 @@ function onEnInput(){
 async function fetchTranslation(word){
   const row=document.getElementById('autotrans-row');
   try{
-    const r=await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|ru`);
+    // Неофициальный Google Translate endpoint — без ключа, без регистрации
+    const url=`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ru&dt=t&dt=bd&q=${encodeURIComponent(word)}`;
+    const r=await fetch(url);
+    if(!r.ok)throw new Error('translation failed');
     const j=await r.json();
-    if(j.responseStatus!==200||!j.responseData?.translatedText){row.innerHTML='';return;}
-    const trans=j.responseData.translatedText;
-    // Дополнительные варианты из matches
-    const alts=[...new Set([trans,...(j.matches||[]).slice(0,4).map(m=>m.translation)])].filter(Boolean).slice(0,3);
-    row.innerHTML=alts.map(t=>`<span class="autotrans-pill" onclick="applyTranslation('${e(t).replace(/'/g,"\\'")}')">+ ${e(t)}</span>`).join('');
+
+    // Основной перевод — первый элемент массива
+    const main=j[0]?.map(x=>x[0]).filter(Boolean).join('').trim();
+
+    // Дополнительные варианты из словарной части (dt=bd)
+    // j[1] = [{pos, terms:[...]}, ...] — словарные статьи по частям речи
+    const extras=[];
+    if(Array.isArray(j[1])){
+      j[1].forEach(entry=>{
+        if(Array.isArray(entry[1]))entry[1].slice(0,2).forEach(t=>{if(t&&t!==main)extras.push(t);});
+      });
+    }
+
+    const all=[...new Set([main,...extras])].filter(Boolean).slice(0,4);
+    if(!all.length){row.innerHTML='';return;}
+    row.innerHTML=all.map(t=>`<span class="autotrans-pill" onclick="applyTranslation('${e(t).replace(/'/g,"\\'")}')">+ ${e(t)}</span>`).join('');
   }catch(_){row.innerHTML='';}
 }
 function applyTranslation(t){
@@ -1609,6 +1647,7 @@ function rFC(w){
     :`<div class="fc-answer">${e(Array.isArray(a)?a[0]:a)}</div>`;
   const sb=document.getElementById('sbody');
   if(!fcR){
+    const showSwipeHint=parseInt(localStorage.getItem('lx_fc_count')||'0')<8;
     sb.innerHTML=`<div class="fc-card" onclick="rvFC()">
       <span class="fc-hint">Нажми чтобы открыть</span>
       <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
@@ -1616,7 +1655,8 @@ function rFC(w){
         ${d==='en'?`<button class="speak-btn" style="margin-top:12px" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
       </div>
       ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
-    </div>`;
+    </div>
+    ${showSwipeHint?'<div class="swipe-hint">← не знал &nbsp;·&nbsp; знал →</div>':''}`;
     if(d==='en'&&settings.auto_speak!==false)setTimeout(()=>speak(w.en),120);
     startQTimer(()=>{rvFC();});
   }else{
@@ -1633,18 +1673,15 @@ function rFC(w){
       <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button>
       <button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button>
       <button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button>
-    </div>
-    ${(parseInt(localStorage.getItem('lx_fc_count')||'0')<5)?'<div class="swipe-hint">← свайп влево = не знал · вправо = знал →</div>':''}`;
+    </div>`;
     if(d==='en'&&settings.auto_speak!==false)speak(w.en);
-    // Считаем показы для скрытия подсказки
     localStorage.setItem('lx_fc_count',Math.min(99,(parseInt(localStorage.getItem('lx_fc_count')||'0')+1)));
   }
 }
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
 async function fcRt(id,grade){
-  // grade: -1=не знал→0, 1=сомневался→1, 3=знал→2
   const g=grade<=0?0:grade===1?1:2;
-  if(g>0){sS++;dDone++;saveDailyDone(dDone);}else sMist.push(sW[sI]);
+  if(g>0){sS++;markDailyWord(id);}else sMist.push(sW[sI]);
   await upScore(id,grade);fcR=false;sI++;renderCard();
 }
 
@@ -1691,7 +1728,7 @@ async function aCH(wid, optId, isCorrect, timedOut){
     const ex=document.getElementById('we2');ex.style.display='block';
     const allTrans=getDir()==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
     ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+allTrans.join(' / ');
-  }else{sS++;dDone++;saveDailyDone(dDone);}
+  }else{sS++;markDailyWord(sW[sI]?.id);}
   await upScore(wid,ok?2:-1);
   document.getElementById('nxt').style.display='block';
 }
@@ -1778,10 +1815,10 @@ async function chkTY(){
   const primaryCorrect=d==='en'?getPrimary(w):w.en;
   if(r==='ok'){
     res.className='t-result t-ok';res.textContent='✓ Верно!';
-    sS++;dDone++;saveDailyDone(dDone);await upScore(wid,2);sI++;setTimeout(renderCard,1200);
+    sS++;markDailyWord(wid);await upScore(wid,2);sI++;setTimeout(renderCard,1200);
   }else if(r==='near'){
     res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+primaryCorrect;
-    await upScore(wid,1);dDone++;saveDailyDone(dDone);sI++;setTimeout(renderCard,1800);
+    await upScore(wid,1);markDailyWord(wid);sI++;setTimeout(renderCard,1800);
   }else{
     res.className='t-result t-fail';res.textContent='✗ '+primaryCorrect;
     sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);
@@ -1838,7 +1875,7 @@ async function selM(lang,id){
       const errs=mSt.errors?.[id]||0;
       const grade=errs===0?2:errs===1?1:0;
       await upScore(id,grade===2?2:grade===1?1:-1);
-      dDone++;saveDailyDone(dDone);
+      markDailyWord(id);
       msg.textContent='✓ Верно!';
       sI=mSt.matched.length;updP();
       if(mSt.matched.length===mSt.pairs.length){
@@ -1904,7 +1941,7 @@ function confirmResetStats(){
       // Чистим SM-2 кэш и обновляем кэш слов
       try{localStorage.removeItem('lx_sm2');}catch(_){}
       wordsToCache(words);
-      dDone=0;saveDailyDone(0);
+      dailySeenIds=new Set();dDone=0;saveDailyData();
       renderDash();renderList();
       showSnack('✓ Прогресс сброшен');
     }
