@@ -245,8 +245,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .rate-row{display:flex;gap:8px;}
 /* Адаптивный шрифт для очень длинных слов */
 @media(max-width:400px){.fc-word{font-size:36px;}}
-/* Свайп-подсказка */
-.swipe-hint{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;padding:7px 14px;background:var(--card2);border:1px solid var(--border);border-radius:20px;letter-spacing:.02em;}
 .rate-row .btn{flex:1;padding:13px 8px;}
 
 /* CHOICE */
@@ -1501,33 +1499,6 @@ function _doCloseSession(){
   renderDash();renderList();
 }
 
-// ── СВАЙПЫ В СЕССИИ ───────────────────────────
-(function initSwipe(){
-  let tx=0,ty=0,startT=0;
-  document.addEventListener('touchstart',ev=>{
-    const ov=document.getElementById('session-overlay');
-    if(!ov.classList.contains('active'))return;
-    tx=ev.touches[0].clientX;ty=ev.touches[0].clientY;startT=Date.now();
-  },{passive:true});
-  document.addEventListener('touchend',ev=>{
-    const ov=document.getElementById('session-overlay');
-    if(!ov.classList.contains('active'))return;
-    if(document.querySelector('.result'))return; // на экране результата свайп не работает
-    const dx=ev.changedTouches[0].clientX-tx;
-    const dy=ev.changedTouches[0].clientY-ty;
-    const dt=Date.now()-startT;
-    if(Math.abs(dx)<40||Math.abs(dy)>Math.abs(dx)||dt>500)return; // не свайп
-    if(sM==='flashcard'){
-      if(!fcR){rvFC();return;} // свайп любой стороной — открыть карточку
-      if(dx>0){fcRt(sW[sI].id,3);}      // свайп вправо = знал ✓
-      else    {fcRt(sW[sI].id,-1);}     // свайп влево = не знал
-    } else if(sM==='choice'||sM==='typing'){
-      // В этих режимах свайп влево = пропустить (если ещё не ответил)
-      if(dx<0&&!chA&&sM==='choice'){sI++;renderCard();}
-    }
-  },{passive:true});
-})();
-
 // ── SCROLL TO TOP ─────────────────────────────
 window.addEventListener('scroll',()=>{
   const btn=document.getElementById('scroll-top-btn');
@@ -1645,7 +1616,6 @@ function rFC(w){
     :`<div class="fc-answer">${e(Array.isArray(a)?a[0]:a)}</div>`;
   const sb=document.getElementById('sbody');
   if(!fcR){
-    const showSwipeHint=sI<3; // показываем на первых 3 карточках каждой сессии
     sb.innerHTML=`<div class="fc-card" onclick="rvFC()">
       <span class="fc-hint">Нажми чтобы открыть</span>
       <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
@@ -1653,8 +1623,7 @@ function rFC(w){
         ${d==='en'?`<button class="speak-btn" style="margin-top:12px" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
       </div>
       ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
-    </div>
-    ${showSwipeHint?'<div class="swipe-hint">← не знал &nbsp;·&nbsp; знал →</div>':''}`;
+    </div>`;
     if(d==='en'&&settings.auto_speak!==false)setTimeout(()=>speak(w.en),120);
     startQTimer(()=>{rvFC();});
   }else{
@@ -1669,7 +1638,6 @@ function rFC(w){
     </div>
     <div class="rate-row">
       <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button>
-      <button class="btn" onclick="fcRt(${w.id},1)">Сомневался</button>
       <button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button>
     </div>`;
     if(d==='en'&&settings.auto_speak!==false)speak(w.en);
