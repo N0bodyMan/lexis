@@ -304,8 +304,20 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .result-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
 /* MODALS */
-.overlay.modal-mode{background:rgba(0,0,0,.4);align-items:center;justify-content:center;}
-.modal-card{background:var(--card);border-radius:var(--r-xl);width:calc(100% - 2rem);max-width:420px;box-shadow:var(--sh-md);overflow:hidden;}
+.overlay.modal-mode{background:rgba(0,0,0,.4);align-items:flex-end;justify-content:center;padding-bottom:env(safe-area-inset-bottom);}
+@media(min-height:600px){.overlay.modal-mode{align-items:center;}}
+.modal-card{
+  background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;
+  width:100%;max-width:480px;
+  max-height:90vh;
+  display:flex;flex-direction:column;
+  box-shadow:var(--sh-md);overflow:hidden;
+}
+@media(min-height:600px){
+  .modal-card{border-radius:var(--r-xl);width:calc(100% - 2rem);max-height:85vh;}
+}
+.modal-body-pad{padding:1.25rem;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
+.modal-actions{padding:0 1.25rem 1.25rem;flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
 .modal-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);}
 .modal-title{font-size:13px;color:var(--txt);font-weight:600;}
 .modal-body-pad{padding:1.25rem;}
@@ -650,8 +662,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 </div>
 
 <!-- WORD MODAL -->
-<div id="word-modal" class="overlay modal-mode">
-  <div class="modal-card">
+<div id="word-modal" class="overlay modal-mode" onclick="if(event.target===this){document.activeElement?.blur();closeWordModal();}">
+  <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-header">
       <span class="modal-title">Слово</span>
       <div style="display:flex;gap:6px">
@@ -1407,8 +1419,8 @@ function renderModalEdit(id){
     </div>
     <div class="field-group"><label>Транскрипция</label><input type="text" id="edit-tr" value="${e(w.transcription||'')}"/></div>`;
   document.getElementById('modal-actions').innerHTML=`
-    <button class="btn solid full" onclick="saveWordEdit(${id})">Сохранить</button>
-    <button class="btn full" onclick="renderModalView(${id});inEditMode=false;document.getElementById('modal-edit-btn').textContent='✏️'">Отмена</button>`;
+    <button type="button" class="btn solid full" onclick="document.activeElement?.blur();saveWordEdit(${id})">Сохранить</button>
+    <button type="button" class="btn full" onclick="renderModalView(${id});inEditMode=false;document.getElementById('modal-edit-btn').textContent='✏️'">Отмена</button>`;
   document.getElementById('modal-edit-btn').textContent='👁';
 }
 
@@ -1427,10 +1439,13 @@ function removeEditTrans(idx){
 function toggleEditMode(){if(!currentModalWordId)return;inEditMode=!inEditMode;if(inEditMode)renderModalEdit(currentModalWordId);else renderModalView(currentModalWordId);}
 
 async function saveWordEdit(id){
-  const en=document.getElementById('edit-en').value.trim();
-  const tr=document.getElementById('edit-tr').value.trim();
-  const trans=[...document.querySelectorAll('[id^="edit-trans-"]')].map(i=>i.value.trim()).filter(Boolean);
-  if(!en||!trans.length){showSnack('Заполни слово и перевод');return;}
+  const en=document.getElementById('edit-en')?.value.trim();
+  const tr=document.getElementById('edit-tr')?.value.trim()||'';
+  // Читаем все input-ы внутри контейнера — не зависим от ID
+  const trans=[...document.querySelectorAll('#edit-trans-rows input[type=text]')]
+    .map(i=>i.value.trim()).filter(Boolean);
+  if(!en){showSnack('Заполни английское слово');return;}
+  if(!trans.length){showSnack('Добавь хотя бы один перевод');return;}
   const ru=trans.join('; ');
   try{
     await upW(id,{en,ru,transcription:tr});
