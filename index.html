@@ -313,6 +313,20 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .modal-tr{font-size:13px;color:var(--muted);margin-bottom:10px;}
 .modal-translations{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
 .modal-trans-pill{background:var(--acc-bg);border:1px solid var(--acc-light);border-radius:20px;padding:5px 12px;font-size:14px;color:var(--acc);font-weight:500;}
+/* Блок контекста */
+.ctx-block{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;margin-top:12px;}
+.ctx-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600;margin-bottom:6px;}
+.ctx-example-en{font-size:13px;color:var(--txt);font-style:italic;margin-bottom:4px;line-height:1.5;}
+.ctx-example-ru{font-size:12px;color:var(--txt2);margin-bottom:8px;line-height:1.5;}
+.ctx-note{font-size:11px;color:var(--muted);line-height:1.5;padding-top:8px;border-top:1px solid var(--border);}
+/* Кнопка генерации контекста */
+.ctx-gen-btn{font-size:11px;color:var(--acc);cursor:pointer;font-weight:500;background:none;border:none;padding:0;letter-spacing:.03em;}
+.ctx-gen-btn:hover{text-decoration:underline;}
+.ctx-gen-btn:disabled{opacity:.4;cursor:default;text-decoration:none;}
+/* Контекст во флэшкарте */
+.fc-context{margin-top:8px;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:var(--r);text-align:left;width:100%;}
+.fc-ctx-en{font-size:12px;color:var(--txt2);font-style:italic;margin-bottom:3px;line-height:1.5;}
+.fc-ctx-ru{font-size:11px;color:var(--muted);line-height:1.5;}
 .modal-meta{font-size:12px;color:var(--muted);margin-bottom:5px;}
 .modal-score-bar{height:6px;background:var(--border);border-radius:3px;margin:8px 0 1rem;}
 .modal-score-fill{height:6px;border-radius:3px;background:var(--acc);}
@@ -1020,21 +1034,17 @@ async function loadWords(){
   const cached = wordsFromCache();
 
   if(cached){
-    // Есть кэш → показываем немедленно
     words = mergeWordsFromDB(cached.data);
+    loadContextCache();
     listPage=0; renderDash(); renderList();
-    // Показываем тихий индикатор обновления только если кэш устарел
-    if(!cached.fresh){
-      showCacheStatus('обновляю...');
-    }
-    // Фоновое обновление — не блокирует UI
+    if(!cached.fresh){showCacheStatus('обновляю...');}
     _revalidateWords();
   } else {
-    // Кэша нет → обычная загрузка с индикатором
     document.getElementById('wlist').innerHTML='<div class="loading">Загрузка...</div>';
     try{
       const fresh = await gW(CU.id) || [];
       words = mergeWordsFromDB(fresh);
+      loadContextCache();
       wordsToCache(fresh);
       listPage=0; renderDash(); renderList();
     }catch(ex){
@@ -1353,6 +1363,19 @@ function renderModalView(id){
   const w=words.find(x=>x.id===id);if(!w)return;
   const s=w.score||0,pct=Math.round((s/6)*100),rev=w.last_reviewed?new Date(w.last_reviewed).toLocaleDateString('ru-RU'):'никогда';
   const trans=getWordTranslations(w);
+
+  // Блок контекста
+  const hasCtx=w.example_en&&w.example_ru;
+  const ctxHtml=hasCtx
+    ?`<div class="ctx-block">
+        <div class="ctx-label">Пример употребления</div>
+        <div class="ctx-example-en">${e(w.example_en)}</div>
+        <div class="ctx-example-ru">${e(w.example_ru)}</div>
+        ${w.usage_note?`<div class="ctx-note">${e(w.usage_note)}</div>`:''}
+        <div style="margin-top:8px"><button class="ctx-gen-btn" id="ctx-regen-btn" onclick="generateContext(${id},true)">↻ Обновить</button></div>
+      </div>`
+    :`<div style="margin-top:10px"><button class="ctx-gen-btn" id="ctx-gen-btn" onclick="generateContext(${id},false)">✦ Сгенерировать пример употребления</button></div>`;
+
   document.getElementById('modal-body').innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:4px">
       <div class="modal-word">${e(w.en)}</div>
@@ -1362,7 +1385,8 @@ function renderModalView(id){
     <div class="modal-translations">${trans.map(t=>`<span class="modal-trans-pill">${e(t)}</span>`).join('')}</div>
     <div class="modal-meta">Повторений: ${w.review_count||0} · Последний раз: ${rev}</div>
     <div class="modal-score-bar"><div class="modal-score-fill" style="width:${pct}%"></div></div>
-    <div class="modal-meta">Уровень знания: ${s}/6</div>`;
+    <div class="modal-meta">Уровень знания: ${s}/6</div>
+    ${ctxHtml}`;
   document.getElementById('modal-actions').innerHTML=`<button class="btn danger-btn full" onclick="deleteWord(${id});closeWordModal()">Удалить слово</button>`;
   document.getElementById('modal-edit-btn').textContent='✏️';
 }
@@ -1416,6 +1440,76 @@ async function saveWordEdit(id){
     document.getElementById('modal-edit-btn').textContent='✏️';
     showSnack('✓ Сохранено');
   }catch(ex){showSnack('Ошибка: '+ex.message);}
+}
+
+// ── ГЕНЕРАЦИЯ КОНТЕКСТА (Edge Function + Gemini) ──
+async function generateContext(wordId, isRegen){
+  const w=words.find(x=>x.id===wordId);if(!w)return;
+
+  // Блокируем кнопку и показываем статус
+  const btnId=isRegen?'ctx-regen-btn':'ctx-gen-btn';
+  const btn=document.getElementById(btnId);
+  if(btn){btn.disabled=true;btn.textContent='Генерирую...';}
+
+  try{
+    const r=await fetch(`${SURL}/functions/v1/word-context`,{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+SKEY
+      },
+      body:JSON.stringify({word:w.en})
+    });
+    if(!r.ok)throw new Error('Ошибка сервера');
+    const j=await r.json();
+    if(j.error)throw new Error(j.error);
+    if(!j.example_en||!j.example_ru)throw new Error('Пустой ответ');
+
+    // Сохраняем в объект слова
+    w.example_en=j.example_en;
+    w.example_ru=j.example_ru;
+    w.usage_note=j.usage_note||'';
+
+    // Сохраняем в БД — кладём в поле transcription не можем,
+    // используем отдельный localStorage кэш контекстов
+    try{
+      const ctxCache=JSON.parse(localStorage.getItem('lx_ctx')||'{}');
+      ctxCache[wordId]={example_en:j.example_en,example_ru:j.example_ru,usage_note:j.usage_note||''};
+      localStorage.setItem('lx_ctx',JSON.stringify(ctxCache));
+    }catch(_){}
+
+    // Пытаемся сохранить в БД если колонки существуют
+    try{
+      await upW(wordId,{
+        example_en:j.example_en,
+        example_ru:j.example_ru,
+        usage_note:j.usage_note||''
+      });
+    }catch(_){
+      // Колонок может не быть — данные уже в localStorage, всё ок
+    }
+
+    wordsToCache(words);
+    renderModalView(wordId);
+    showSnack('✓ Пример сгенерирован');
+  }catch(ex){
+    if(btn){btn.disabled=false;btn.textContent=isRegen?'↻ Обновить':'✦ Сгенерировать пример употребления';}
+    showSnack('Не удалось сгенерировать: '+ex.message);
+  }
+}
+
+// Загружаем кэш контекстов в слова после loadWords
+function loadContextCache(){
+  try{
+    const ctxCache=JSON.parse(localStorage.getItem('lx_ctx')||'{}');
+    words.forEach(w=>{
+      if(ctxCache[w.id]){
+        w.example_en=ctxCache[w.id].example_en;
+        w.example_ru=ctxCache[w.id].example_ru;
+        w.usage_note=ctxCache[w.id].usage_note;
+      }
+    });
+  }catch(_){}
 }
 
 // ── DASHBOARD ─────────────────────────────────
@@ -1628,6 +1722,9 @@ function rFC(w){
     startQTimer(()=>{rvFC();});
   }else{
     stopQTimer();
+    const ctxHtml=w.example_en&&w.example_ru
+      ?`<div class="fc-context"><div class="fc-ctx-en">${e(w.example_en)}</div><div class="fc-ctx-ru">${e(w.example_ru)}</div></div>`
+      :'';
     sb.innerHTML=`<div class="fc-card" style="cursor:default">
       <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
         <div class="fc-word">${e(q)}</div>
@@ -1635,6 +1732,7 @@ function rFC(w){
       </div>
       ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
       ${aHtml}
+      ${ctxHtml}
     </div>
     <div class="rate-row">
       <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button>
