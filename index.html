@@ -304,23 +304,51 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .result-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
 /* MODALS */
-.overlay.modal-mode{background:rgba(0,0,0,.4);align-items:flex-end;justify-content:center;padding-bottom:env(safe-area-inset-bottom);}
-@media(min-height:600px){.overlay.modal-mode{align-items:center;}}
+/* Оверлей — фиксированный, блокирует скролл фона через JS */
+.overlay.modal-mode{
+  background:rgba(0,0,0,.45);
+  align-items:center;
+  justify-content:center;
+  overflow:hidden; /* сам оверлей не скроллится */
+}
+/* Карточка — фиксированная высота, скроллится только контент внутри */
 .modal-card{
-  background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;
-  width:100%;max-width:480px;
-  max-height:90vh;
-  display:flex;flex-direction:column;
-  box-shadow:var(--sh-md);overflow:hidden;
+  background:var(--card);
+  border-radius:var(--r-xl);
+  width:calc(100% - 2rem);
+  max-width:440px;
+  /* Фиксированная высота — не зависит от клавиатуры */
+  max-height:80vh;
+  display:flex;
+  flex-direction:column;
+  box-shadow:var(--sh-md);
+  overflow:hidden;
+  /* Не реагируем на изменение высоты окна (появление клавиатуры) */
+  position:relative;
 }
-@media(min-height:600px){
-  .modal-card{border-radius:var(--r-xl);width:calc(100% - 2rem);max-height:85vh;}
+.modal-header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 1.25rem;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0; /* не сжимается */
 }
-.modal-body-pad{padding:1.25rem;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch;}
-.modal-actions{padding:0 1.25rem 1.25rem;flex-shrink:0;display:flex;flex-direction:column;gap:8px;}
-.modal-header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:1px solid var(--border);}
 .modal-title{font-size:13px;color:var(--txt);font-weight:600;}
-.modal-body-pad{padding:1.25rem;}
+/* Скроллируемый контент — только эта зона */
+.modal-body-pad{
+  padding:1.25rem;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  flex:1; /* занимает всё доступное место между header и actions */
+  overscroll-behavior:contain; /* не пробрасывает скролл на фон */
+}
+/* Кнопки — прибиты к низу, не скроллятся */
+.modal-actions{
+  padding:1rem 1.25rem;
+  border-top:1px solid var(--border);
+  flex-shrink:0;
+  display:flex;flex-direction:column;gap:8px;
+  background:var(--card); /* перекрывает контент при скролле */
+}
 .modal-word{font-family:'Playfair Display',serif;font-size:36px;margin-bottom:4px;}
 .modal-tr{font-size:13px;color:var(--muted);margin-bottom:10px;}
 .modal-translations{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:1rem;}
@@ -1368,8 +1396,22 @@ function loadMoreWords(){
 }
 
 // ── WORD MODAL ────────────────────────────────
-function openModal(id){currentModalWordId=id;inEditMode=false;renderModalView(id);document.getElementById('word-modal').classList.add('active');}
-function closeWordModal(){document.getElementById('word-modal').classList.remove('active');currentModalWordId=null;inEditMode=false;}
+function openModal(id){
+  currentModalWordId=id;inEditMode=false;renderModalView(id);
+  document.getElementById('word-modal').classList.add('active');
+  // Блокируем скролл фона
+  document.body.style.overflow='hidden';
+  document.body.style.position='fixed';
+  document.body.style.width='100%';
+}
+function closeWordModal(){
+  document.getElementById('word-modal').classList.remove('active');
+  currentModalWordId=null;inEditMode=false;
+  // Восстанавливаем скролл фона
+  document.body.style.overflow='';
+  document.body.style.position='';
+  document.body.style.width='';
+}
 
 function renderModalView(id){
   const w=words.find(x=>x.id===id);if(!w)return;
