@@ -304,50 +304,45 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .result-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
 
 /* MODALS */
-/* Оверлей — фиксированный, блокирует скролл фона через JS */
 .overlay.modal-mode{
   background:rgba(0,0,0,.45);
   align-items:center;
   justify-content:center;
-  overflow:hidden; /* сам оверлей не скроллится */
+  overflow:hidden;
+  /* touch-action только на самом оверлее — блокируем скролл фона */
+  touch-action:none;
 }
-/* Карточка — фиксированная высота, скроллится только контент внутри */
+/* Карточка скроллится вся как единый блок */
 .modal-card{
   background:var(--card);
   border-radius:var(--r-xl);
   width:calc(100% - 2rem);
   max-width:440px;
-  /* Фиксированная высота — не зависит от клавиатуры */
   max-height:80vh;
-  display:flex;
-  flex-direction:column;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
   box-shadow:var(--sh-md);
-  overflow:hidden;
-  /* Не реагируем на изменение высоты окна (появление клавиатуры) */
-  position:relative;
+  /* Разрешаем скролл только карточке */
+  touch-action:pan-y;
 }
 .modal-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:1rem 1.25rem;
   border-bottom:1px solid var(--border);
-  flex-shrink:0; /* не сжимается */
+  /* Липкий заголовок — всегда виден при скролле */
+  position:sticky;top:0;z-index:2;
+  background:var(--card);
 }
 .modal-title{font-size:13px;color:var(--txt);font-weight:600;}
-/* Скроллируемый контент — только эта зона */
-.modal-body-pad{
-  padding:1.25rem;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  flex:1; /* занимает всё доступное место между header и actions */
-  overscroll-behavior:contain; /* не пробрасывает скролл на фон */
-}
-/* Кнопки — прибиты к низу, не скроллятся */
+.modal-body-pad{padding:1.25rem;}
+/* Кнопки — липкие снизу */
 .modal-actions{
-  padding:1rem 1.25rem;
+  padding:1rem 1.25rem 1.25rem;
+  position:sticky;bottom:0;z-index:2;
+  background:var(--card);
   border-top:1px solid var(--border);
-  flex-shrink:0;
   display:flex;flex-direction:column;gap:8px;
-  background:var(--card); /* перекрывает контент при скролле */
 }
 .modal-word{font-family:'Playfair Display',serif;font-size:36px;margin-bottom:4px;}
 .modal-tr{font-size:13px;color:var(--muted);margin-bottom:10px;}
@@ -1396,21 +1391,26 @@ function loadMoreWords(){
 }
 
 // ── WORD MODAL ────────────────────────────────
+let _scrollY=0;
 function openModal(id){
   currentModalWordId=id;inEditMode=false;renderModalView(id);
   document.getElementById('word-modal').classList.add('active');
-  // Блокируем скролл фона
-  document.body.style.overflow='hidden';
+  // Блокируем скролл фона без прыжка страницы
+  _scrollY=window.scrollY;
+  document.body.style.top=`-${_scrollY}px`;
   document.body.style.position='fixed';
   document.body.style.width='100%';
+  document.body.style.overflowY='scroll';
 }
 function closeWordModal(){
   document.getElementById('word-modal').classList.remove('active');
   currentModalWordId=null;inEditMode=false;
-  // Восстанавливаем скролл фона
-  document.body.style.overflow='';
+  // Восстанавливаем позицию скролла
   document.body.style.position='';
+  document.body.style.top='';
   document.body.style.width='';
+  document.body.style.overflowY='';
+  window.scrollTo(0,_scrollY);
 }
 
 function renderModalView(id){
