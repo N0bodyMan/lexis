@@ -323,9 +323,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   box-shadow:var(--sh-md);
-  /* Разрешаем скролл только карточке */
   touch-action:pan-y;
+  /* Скрываем скроллбар — он вылезает за border-radius */
+  scrollbar-width:none;
+  -ms-overflow-style:none;
 }
+.modal-card::-webkit-scrollbar{display:none;}
 .modal-header{
   display:flex;align-items:center;justify-content:space-between;
   padding:1rem 1.25rem;
@@ -1467,10 +1470,24 @@ function renderModalEdit(id){
 }
 
 function addEditTrans(){
-  const rows=document.getElementById('edit-trans-rows');const idx=rows.children.length;
+  const rows=document.getElementById('edit-trans-rows');
+  const idx=rows.children.length;
   const div=document.createElement('div');div.className='trans-row';div.id='edit-tr-row-'+idx;
   div.innerHTML=`<input type="text" id="edit-trans-${idx}" placeholder="Перевод ${idx+1}"/><button class="icon-btn" onclick="removeEditTrans(${idx})" style="opacity:.5">×</button>`;
-  rows.appendChild(div);div.querySelector('input').focus();
+  rows.appendChild(div);
+  // Скроллим карточку к новому полю, потом фокус — не даём браузеру прыгнуть в начало
+  const inp=div.querySelector('input');
+  const card=document.querySelector('.modal-card');
+  if(card&&inp){
+    // Небольшая задержка — ждём пока поле добавится в DOM
+    requestAnimationFrame(()=>{
+      const cardRect=card.getBoundingClientRect();
+      const inpRect=inp.getBoundingClientRect();
+      const offset=inpRect.bottom-cardRect.bottom+16;
+      if(offset>0)card.scrollTop+=offset;
+      inp.focus({preventScroll:true}); // фокус без автоскролла браузера
+    });
+  }
 }
 function removeEditTrans(idx){
   const rows=document.getElementById('edit-trans-rows');
@@ -1478,7 +1495,15 @@ function removeEditTrans(idx){
   document.getElementById('edit-tr-row-'+idx)?.remove();
 }
 
-function toggleEditMode(){if(!currentModalWordId)return;inEditMode=!inEditMode;if(inEditMode)renderModalEdit(currentModalWordId);else renderModalView(currentModalWordId);}
+function toggleEditMode(){
+  if(!currentModalWordId)return;
+  inEditMode=!inEditMode;
+  if(inEditMode)renderModalEdit(currentModalWordId);
+  else renderModalView(currentModalWordId);
+  // Скроллим карточку в начало при переключении режимов
+  const card=document.querySelector('.modal-card');
+  if(card)card.scrollTop=0;
+}
 
 async function saveWordEdit(id){
   const en=document.getElementById('edit-en')?.value.trim();
