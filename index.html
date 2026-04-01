@@ -1475,19 +1475,17 @@ function addEditTrans(){
   const div=document.createElement('div');div.className='trans-row';div.id='edit-tr-row-'+idx;
   div.innerHTML=`<input type="text" id="edit-trans-${idx}" placeholder="Перевод ${idx+1}"/><button class="icon-btn" onclick="removeEditTrans(${idx})" style="opacity:.5">×</button>`;
   rows.appendChild(div);
-  // Скроллим карточку к новому полю, потом фокус — не даём браузеру прыгнуть в начало
-  const inp=div.querySelector('input');
-  const card=document.querySelector('.modal-card');
-  if(card&&inp){
-    // Небольшая задержка — ждём пока поле добавится в DOM
-    requestAnimationFrame(()=>{
-      const cardRect=card.getBoundingClientRect();
-      const inpRect=inp.getBoundingClientRect();
-      const offset=inpRect.bottom-cardRect.bottom+16;
-      if(offset>0)card.scrollTop+=offset;
-      inp.focus({preventScroll:true}); // фокус без автоскролла браузера
-    });
-  }
+  // Скроллим карточку к новому полю
+  requestAnimationFrame(()=>{
+    const card=document.querySelector('.modal-card');
+    const inp=div.querySelector('input');
+    if(card&&inp){
+      const bot=inp.getBoundingClientRect().bottom;
+      const cardBot=card.getBoundingClientRect().bottom;
+      if(bot>cardBot)card.scrollTop+=bot-cardBot+16;
+    }
+    inp?.focus({preventScroll:true});
+  });
 }
 function removeEditTrans(idx){
   const rows=document.getElementById('edit-trans-rows');
@@ -1674,6 +1672,23 @@ function _doCloseSession(){
   document.getElementById('session-overlay').classList.remove('active');
   renderDash();renderList();
 }
+
+// ── MODAL SCROLL LOCK ─────────────────────────
+// iOS сбрасывает scrollTop контейнера при focus() на любой input внутри него.
+// Перехватываем focusin на карточке и сразу восстанавливаем позицию.
+(function initModalScrollFix(){
+  document.addEventListener('focusin', ev=>{
+    const card=document.querySelector('#word-modal .modal-card');
+    if(!card)return;
+    if(!card.contains(ev.target))return;
+    // Запоминаем позицию до того как браузер её сбросит
+    const saved=card.scrollTop;
+    // Восстанавливаем в следующем тике — после того как браузер сбросил
+    Promise.resolve().then(()=>{
+      if(card.scrollTop<saved)card.scrollTop=saved;
+    });
+  }, true); // capture — срабатывает до браузерного обработчика
+})();
 
 // ── SCROLL TO TOP ─────────────────────────────
 window.addEventListener('scroll',()=>{
