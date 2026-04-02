@@ -163,8 +163,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* Search & filter toolbar */
 .words-toolbar{display:flex;flex-direction:column;gap:8px;margin-bottom:.75rem;}
 .search-row{position:relative;}
-.search-row input{padding-left:36px;}
+.search-row input{padding-left:36px;padding-right:36px;}
 .search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:15px;pointer-events:none;}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;line-height:1;display:none;border-radius:50%;transition:color .15s;}
+.search-clear:hover{color:var(--txt);}
+.search-clear.visible{display:block;}
 .filter-sort-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .filter-btn{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border2);background:var(--card);color:var(--muted);font-family:'Inter',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;}
 .filter-btn:hover{color:var(--txt);}
@@ -551,7 +554,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="words-toolbar">
       <div class="search-row">
         <span class="search-icon">🔍</span>
-        <input type="text" id="search-inp" placeholder="Поиск по словарю..." oninput="renderList()"/>
+        <input type="text" id="search-inp" placeholder="Поиск по словарю..." oninput="onSearchInput(this)"/>
+        <button class="search-clear" id="search-clear" onclick="clearSearch()" title="Очистить">✕</button>
       </div>
       <div class="filter-sort-row">
         <button class="filter-btn active" onclick="setFilter('all',this)">Все</button>
@@ -814,21 +818,18 @@ window.Telegram?.WebApp?.expand();
 
 (async()=>{
   const tg=window.Telegram?.WebApp;
-  if(!tg?.initDataUnsafe?.user)return;
-  const tgUser=tg.initDataUnsafe.user;
-  const tgId=String(tgUser.id);
-  const displayName=tgUser.username||tgUser.first_name||'user_'+tgId;
+  // Передаём initData серверу — он верифицирует подпись с bot_token
+  if(!tg?.initData)return;
   try{
-    let u=await gUByTg(tgId);
-    if(!u){
-      const salt=genSalt(24);
-      const randPass=genSalt(32);
-      const ph=await hp(randPass,salt);
-      u=await cU(displayName,ph,salt,tgId);
-    }
-    if(u)await lok(u);
+    const r=await fetch(`${SURL}/functions/v1/auth-telegram`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({initData:tg.initData})
+    });
+    const j=await r.json();
+    if(r.ok&&j.user)await lok(j.user);
   }catch(ex){
-    console.warn('TG auto-login failed:',ex.message);
+    console.warn('TG auth failed:',ex.message);
   }
 })();
 
@@ -839,7 +840,6 @@ async function authLogin(){
   const err=document.getElementById('auth-error');
   err.textContent='';
 
-  // Базовая валидация
   if(!name||!pass){err.textContent='Заполни все поля';return;}
   if(name.length<2){err.textContent='Имя минимум 2 символа';return;}
   if(name.length>50){err.textContent='Имя максимум 50 символов';return;}
@@ -850,47 +850,35 @@ async function authLogin(){
   btn.textContent='Загрузка...';btn.disabled=true;
 
   try{
-    // Проверяем rate limit
-    const rl=await checkRateLimit(name);
-    if(!rl.allowed){
-      const mins=rl.until?Math.ceil((new Date(rl.until)-Date.now())/60000):15;
-      err.textContent=`Слишком много попыток. Попробуй через ${mins} мин.`;
+    // Вся логика входа/регистрации на сервере — клиент не видит pass_hash
+    const r=await fetch(`${SURL}/functions/v1/auth-login`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({name,password:pass})
+    });
+    const j=await r.json();
+    if(!r.ok||j.error){
+      if(j.code==='RATE_LIMITED'){
+        err.textContent=`Слишком много попыток. Попробуй через ${j.retry_after_min||15} мин.`;
+      }else if(j.code==='WRONG_PASSWORD'){
+        err.textContent='Неверный пароль';
+      }else{
+        err.textContent=j.error||'Ошибка входа';
+      }
       btn.textContent='Войти / создать аккаунт';btn.disabled=false;
       return;
     }
-
-    let u=await gU(name);
-
-    if(!u){
-      // Регистрация — генерируем соль для нового пользователя
-      const salt=genSalt(16);
-      const ph=await hp(pass,salt);
-      u=await cU(name,ph,salt,'');
-      if(!u)throw new Error('Не удалось создать аккаунт');
-      await lok(u);
-    }else{
-      // Вход — хэшируем с сохранённой солью пользователя
-      const ph=await hp(pass, u.salt||'');
-      if(u.pass_hash!==ph){
-        await recordFailedAttempt(name);
-        err.textContent='Неверный пароль';
-        btn.textContent='Войти / создать аккаунт';btn.disabled=false;
-        return;
-      }
-      // Успешный вход — сбрасываем счётчик попыток
-      await resetFailedAttempts(name);
-      await lok(u);
-    }
+    await lok(j.user);
   }catch(ex){
-    err.textContent='Ошибка: '+ex.message;
+    err.textContent='Ошибка соединения: '+ex.message;
     btn.textContent='Войти / создать аккаунт';btn.disabled=false;
   }
 }
 
 async function lok(u){
   CU=u;
-  // Храним в localStorage только минимум — без pass_hash
-  const safe={id:u.id,name:u.name,salt:u.salt,tg_id:u.tg_id,daily_goal:u.daily_goal,streak:u.streak,last_practice:u.last_practice,settings:u.settings};
+  // Храним в localStorage только минимум — без pass_hash и salt
+  const safe={id:u.id,name:u.name,tg_id:u.tg_id,daily_goal:u.daily_goal,streak:u.streak,last_practice:u.last_practice,settings:u.settings};
   localStorage.setItem('lx',JSON.stringify(safe));
   document.getElementById('header-username').textContent=u.name;
   document.getElementById('screen-auth').classList.remove('active');
@@ -1052,16 +1040,17 @@ function wordsFromCache(){
 
 function wordsToCache(arr){
   try{
-    // Не кэшируем sm2_* поля — они уже в lx_sm2
     const slim = arr.map(w=>({
       id:w.id, user_id:w.user_id, en:w.en, ru:w.ru, en_lower:w.en_lower,
       transcription:w.transcription, score:w.score, next_review:w.next_review,
-      review_count:w.review_count, last_reviewed:w.last_reviewed, created_at:w.created_at
+      review_count:w.review_count, last_reviewed:w.last_reviewed, created_at:w.created_at,
+      // SM-2 — источник истины БД, кэшируем для быстрого UI
+      sm2_ef:w.sm2_ef, sm2_intv:w.sm2_intv, sm2_reps:w.sm2_reps,
+      // Контексты — кэшируем чтобы не пропадали после перезагрузки
+      example_en:w.example_en, example_ru:w.example_ru, usage_note:w.usage_note
     }));
     localStorage.setItem(cacheKey(), JSON.stringify({ts:Date.now(), data:slim}));
   }catch(e){
-    // localStorage может быть переполнен (5MB лимит)
-    // Чистим старые кэши других пользователей и пробуем снова
     try{
       Object.keys(localStorage)
         .filter(k=>k.startsWith(CACHE_KEY_PFX) && k!==cacheKey())
@@ -1158,11 +1147,21 @@ async function addWord(){
   const trans=getTranslations();
   const tr=document.getElementById('inp-tr').value.trim();
   if(!en||!trans.length){showSnack('Заполни слово и перевод');return;}
+  // Проверка дубля
+  const dup=words.find(w=>w.en_lower===en.toLowerCase()||w.en.toLowerCase()===en.toLowerCase());
+  if(dup){
+    showSnack(`«${en}» уже есть в словаре`);
+    // Подсвечиваем существующее слово
+    document.getElementById('inp-en').style.borderColor='var(--warn)';
+    setTimeout(()=>{document.getElementById('inp-en').style.borderColor='';},2000);
+    return;
+  }
   const ru=trans.join('; ');
   try{
     const w=await aW(CU.id,en,ru,tr);
     if(w){words.push(w);wordsToCache(words);renderDash();renderList();}
     document.getElementById('inp-en').value='';document.getElementById('inp-tr').value='';
+    document.getElementById('autotrans-row').innerHTML='';
     document.getElementById('trans-rows').innerHTML=`<div class="trans-row"><input type="text" placeholder="Перевод 1" onkeydown="handleTransKey(event,0)"/><button class="icon-btn" onclick="removeTrans(0)" style="opacity:.5" title="Удалить">×</button></div>`;
     document.getElementById('inp-en').focus();
     showSnack('✓ Слово добавлено');
@@ -1407,7 +1406,18 @@ function loadSM2Cache(){
 }
 
 // ── SELECT / SORT / FILTER ────────────────────
-function setFilter(f,btn){wF=f;selectedWords.clear();document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderList();updateSelUI();}
+function onSearchInput(inp){
+  const btn=document.getElementById('search-clear');
+  if(btn)btn.classList.toggle('visible',inp.value.length>0);
+  renderList();
+}
+function clearSearch(){
+  const inp=document.getElementById('search-inp');
+  const btn=document.getElementById('search-clear');
+  if(inp){inp.value='';inp.focus();}
+  if(btn)btn.classList.remove('visible');
+  renderList();
+}
 
 function toggleSort(){
   // Три состояния: null → true (A→Z) → false (Z→A) → null
