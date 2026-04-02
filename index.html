@@ -910,15 +910,7 @@ document.getElementById('auth-pass').addEventListener('keydown',e=>{if(e.key==='
     if(fresh){
       CU=fresh;
       // Обновляем кэш свежими данными (без pass_hash)
-const safe = {
-  id: fresh.id,
-  name: fresh.name,
-  tg_id: fresh.tg_id,
-  daily_goal: fresh.daily_goal,
-  streak: fresh.streak,
-  last_practice: fresh.last_practice,
-  settings: fresh.settings
-};
+const safe={id:fresh.id,name:fresh.name,salt:fresh.salt,tg_id:fresh.tg_id,daily_goal:fresh.daily_goal,streak:fresh.streak,last_practice:fresh.last_practice,settings:fresh.settings};
       localStorage.setItem('lx',JSON.stringify(safe));
       document.getElementById('header-username').textContent=fresh.name;
       document.getElementById('screen-auth').classList.remove('active');
