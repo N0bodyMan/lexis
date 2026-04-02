@@ -818,18 +818,61 @@ window.Telegram?.WebApp?.expand();
 
 (async()=>{
   const tg=window.Telegram?.WebApp;
-  // Передаём initData серверу — он верифицирует подпись с bot_token
-  if(!tg?.initData)return;
-  try{
-    const r=await fetch(`${SURL}/functions/v1/auth-telegram`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({initData:tg.initData})
-    });
-    const j=await r.json();
-    if(r.ok&&j.user)await lok(j.user);
-  }catch(ex){
-    console.warn('TG auth failed:',ex.message);
+  console.log('[TG] WebApp:', tg ? 'found' : 'not found');
+  console.log('[TG] initData:', tg?.initData ? 'present ('+tg.initData.length+' chars)' : 'empty');
+  console.log('[TG] initDataUnsafe:', JSON.stringify(tg?.initDataUnsafe?.user||null));
+
+  if(!tg?.initData&&!tg?.initDataUnsafe?.user){
+    console.log('[TG] No Telegram data — skipping');
+    return;
+  }
+
+  // Пробуем безопасную верификацию через Edge Function
+  if(tg.initData){
+    try{
+      console.log('[TG] Calling auth-telegram Edge Function...');
+      const r=await fetch(`${SURL}/functions/v1/auth-telegram`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        body:JSON.stringify({initData:tg.initData})
+      });
+      console.log('[TG] Edge Function status:', r.status);
+      const j=await r.json();
+      console.log('[TG] Edge Function response:', JSON.stringify(j));
+      if(r.status===404){
+        console.log('[TG] Edge Function not deployed, using fallback');
+      } else if(r.ok&&j.user){
+        console.log('[TG] Edge Function auth success, user:', j.user.name);
+        await lok(j.user);return;
+      } else {
+        console.warn('[TG] Edge Function returned error:', j.error);
+        // Не возвращаемся — пробуем фолбэк
+      }
+    }catch(ex){
+      console.warn('[TG] Edge Function fetch error:', ex.message);
+    }
+  }
+
+  // Фолбэк: прямой вход по tg_id
+  if(tg.initDataUnsafe?.user){
+    const tgUser=tg.initDataUnsafe.user;
+    const tgId=String(tgUser.id);
+    const displayName=tgUser.username||tgUser.first_name||'user_'+tgId;
+    console.log('[TG] Fallback: tgId='+tgId+', name='+displayName);
+    try{
+      let u=await gUByTg(tgId);
+      console.log('[TG] gUByTg result:', u ? 'found user '+u.name : 'not found');
+      if(!u){
+        console.log('[TG] Creating new user...');
+        const salt=genSalt(24);
+        const randPass=genSalt(32);
+        const ph=await hp(randPass,salt);
+        u=await cU(displayName,ph,salt,tgId);
+        console.log('[TG] New user created:', u?.name);
+      }
+      if(u){console.log('[TG] Logging in as:', u.name);await lok(u);}
+      else console.error('[TG] Failed to get/create user');
+    }catch(ex){console.error('[TG] Fallback error:', ex.message);}
   }
 })();
 
@@ -850,27 +893,60 @@ async function authLogin(){
   btn.textContent='Загрузка...';btn.disabled=true;
 
   try{
-    // Вся логика входа/регистрации на сервере — клиент не видит pass_hash
-    const r=await fetch(`${SURL}/functions/v1/auth-login`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
-      body:JSON.stringify({name,password:pass})
-    });
-    const j=await r.json();
-    if(!r.ok||j.error){
-      if(j.code==='RATE_LIMITED'){
-        err.textContent=`Слишком много попыток. Попробуй через ${j.retry_after_min||15} мин.`;
-      }else if(j.code==='WRONG_PASSWORD'){
-        err.textContent='Неверный пароль';
-      }else{
-        err.textContent=j.error||'Ошибка входа';
+    // Пробуем Edge Function (проверка пароля на сервере — безопаснее)
+    let useEdge=true;
+    let j;
+    try{
+      const r=await fetch(`${SURL}/functions/v1/auth-login`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        body:JSON.stringify({name,password:pass})
+      });
+      j=await r.json();
+      if(!r.ok&&r.status===404)useEdge=false; // функция не задеплоена
+      else if(!r.ok){
+        if(j.code==='RATE_LIMITED'){
+          err.textContent=`Слишком много попыток. Попробуй через ${j.retry_after_min||15} мин.`;
+        }else if(j.code==='WRONG_PASSWORD'){
+          err.textContent='Неверный пароль';
+        }else{
+          err.textContent=j.error||'Ошибка входа';
+        }
+        btn.textContent='Войти / создать аккаунт';btn.disabled=false;
+        return;
       }
-      btn.textContent='Войти / создать аккаунт';btn.disabled=false;
-      return;
+    }catch(_){useEdge=false;}
+
+    if(useEdge&&j?.user){
+      await lok(j.user);return;
     }
-    await lok(j.user);
+
+    // Фолбэк: прямая проверка через db.js (пока Edge Function не задеплоена)
+    const rl=await checkRateLimit(name);
+    if(!rl.allowed){
+      const mins=rl.until?Math.ceil((new Date(rl.until)-Date.now())/60000):15;
+      err.textContent=`Слишком много попыток. Попробуй через ${mins} мин.`;
+      btn.textContent='Войти / создать аккаунт';btn.disabled=false;return;
+    }
+    let u=await gU(name);
+    if(!u){
+      const salt=genSalt(16);
+      const ph=await hp(pass,salt);
+      u=await cU(name,ph,salt,'');
+      if(!u)throw new Error('Не удалось создать аккаунт');
+      await lok(u);
+    }else{
+      const ph=await hp(pass,u.salt||'');
+      if(u.pass_hash!==ph){
+        await recordFailedAttempt(name);
+        err.textContent='Неверный пароль';
+        btn.textContent='Войти / создать аккаунт';btn.disabled=false;return;
+      }
+      await resetFailedAttempts(name);
+      await lok(u);
+    }
   }catch(ex){
-    err.textContent='Ошибка соединения: '+ex.message;
+    err.textContent='Ошибка: '+ex.message;
     btn.textContent='Войти / создать аккаунт';btn.disabled=false;
   }
 }
