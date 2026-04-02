@@ -149,6 +149,16 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 .import-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh);}
 .import-label{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;margin-bottom:8px;}
+/* Умный импорт */
+.smart-import-row{display:flex;align-items:flex-start;gap:10px;margin-top:12px;cursor:pointer;user-select:none;padding:10px 12px;border-radius:var(--r);border:1.5px solid var(--border);transition:border-color .15s,background .15s;}
+.smart-import-row:hover{border-color:var(--border2);}
+.smart-import-row.active{border-color:var(--acc);background:var(--acc-bg);}
+.smart-import-check{width:20px;height:20px;border:1.5px solid var(--border2);border-radius:5px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .15s;margin-top:1px;}
+.smart-import-row.active .smart-import-check{background:var(--acc);border-color:var(--acc);color:#fff;}
+.smart-import-info{flex:1;min-width:0;}
+.smart-import-title{display:block;font-size:13px;font-weight:600;color:var(--txt);margin-bottom:2px;}
+.smart-import-row.active .smart-import-title{color:var(--acc);}
+.smart-import-desc{display:block;font-size:11px;color:var(--muted);line-height:1.4;}
 
 /* Search & filter toolbar */
 .words-toolbar{display:flex;flex-direction:column;gap:8px;margin-bottom:.75rem;}
@@ -526,7 +536,15 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
     <div class="import-section">
       <div class="import-label">Быстрый импорт</div>
-      <textarea id="inp-import" placeholder="word — перевод&#10;another — другой&#10;example — пример1; пример2"></textarea>
+      <textarea id="inp-import" placeholder="word — перевод&#10;another — другой&#10;&#10;или просто слова (с Умным импортом):&#10;house&#10;beautiful&#10;prepare"></textarea>
+      <!-- Умный импорт -->
+      <label class="smart-import-row" id="smart-import-toggle">
+        <div class="smart-import-check" id="smart-import-check"></div>
+        <div class="smart-import-info">
+          <span class="smart-import-title">Умный импорт</span>
+          <span class="smart-import-desc">Только английские слова — перевод добавится автоматически. Лимит: 20 слов за раз.</span>
+        </div>
+      </label>
       <div style="margin-top:10px"><button class="btn full" onclick="startImport()">Импортировать список</button></div>
     </div>
 
@@ -1152,32 +1170,71 @@ async function addWord(){
 }
 
 // ── IMPORT ────────────────────────────────────
+// ── УМНЫЙ ИМПОРТ ТОГГЛ ───────────────────────
+let smartImportOn=false;
+document.addEventListener('DOMContentLoaded',()=>{
+  const toggle=document.getElementById('smart-import-toggle');
+  if(toggle)toggle.addEventListener('click',()=>{
+    smartImportOn=!smartImportOn;
+    toggle.classList.toggle('active',smartImportOn);
+    document.getElementById('smart-import-check').textContent=smartImportOn?'✓':'';
+    // Меняем плейсхолдер textarea в зависимости от режима
+    const ta=document.getElementById('inp-import');
+    if(ta)ta.placeholder=smartImportOn
+      ?'Введи английские слова, каждое с новой строки:\nhouse\nbeautiful\nprepare'
+      :'word — перевод\nanother — другой\nexample — пример1; пример2';
+  });
+});
+
 async function startImport(){
   const raw=document.getElementById('inp-import').value.trim();
   if(!raw)return;
-  const lines=raw.split('\n').filter(l=>l.includes('—')||l.includes('-')||l.includes('\t'));
-  if(!lines.length){showToast('error','Ошибка','Ничего не распознано. Формат: слово — перевод');return;}
-  const parsed=[];
-  for(const line of lines){
-    const sep=line.includes('—')?'—':line.includes('\t')?'\t':'-';
-    const p=line.split(sep).map(s=>s.trim());
-    if(p.length>=2&&p[0]&&p[1])parsed.push({en:p[0],ru:p[1]});
+
+  let parsed=[];
+
+  if(smartImportOn){
+    // Умный импорт: каждая строка — одно английское слово
+    const lines=raw.split('\n').map(l=>l.trim().toLowerCase()).filter(l=>l&&/^[a-zA-Z\s'-]+$/.test(l));
+    if(!lines.length){showToast('error','Ошибка','Не найдено английских слов. Умный импорт принимает только слова на английском, каждое с новой строки.');return;}
+    if(lines.length>20){showToast('error','Ошибка',`Умный импорт: максимум 20 слов за раз (найдено ${lines.length}). Раздели на несколько импортов.`);return;}
+    // Временный перевод = само слово, заменится при автопереводе
+    parsed=lines.map(en=>({en,ru:en,smartTranslate:true}));
+  } else {
+    // Обычный импорт: слово — перевод
+    const lines=raw.split('\n').filter(l=>l.includes('—')||l.includes('-')||l.includes('\t'));
+    if(!lines.length){showToast('error','Ошибка','Ничего не распознано. Формат: слово — перевод');return;}
+    for(const line of lines){
+      const sep=line.includes('—')?'—':line.includes('\t')?'\t':'-';
+      const p=line.split(sep).map(s=>s.trim());
+      if(p.length>=2&&p[0]&&p[1])parsed.push({en:p[0].toLowerCase(),ru:p[1]});
+    }
+    if(!parsed.length){showToast('error','Ошибка','Ничего не распознано');return;}
   }
-  if(!parsed.length){showToast('error','Ошибка','Ничего не распознано');return;}
+
   window._importParsed=parsed;
+  const withTranslate=smartImportOn||parsed.some(p=>p.smartTranslate);
   const wrap=document.getElementById('toast-wrap');wrap.style.display='block';
-  wrap.innerHTML=`<div class="toast info">
-    <div class="toast-title">Импорт слов</div>
-    <div class="toast-msg">Найдено <strong>${parsed.length}</strong> слов. Добавить в словарь?</div>
-    <div class="toast-msg" style="margin-top:6px;font-size:11px;color:var(--muted)">
-      Автоперевод: ~3 сек/слово, макс 20 за раз (лимит API)
-    </div>
-    <div class="toast-actions">
-      <button class="btn sm" onclick="cancelImport()">Отмена</button>
-      <button class="btn sm" onclick="doImport(false)">Добавить</button>
-      <button class="btn sm solid" onclick="doImport(true)">+ Переводы</button>
-    </div>
-  </div>`;
+
+  if(smartImportOn){
+    wrap.innerHTML=`<div class="toast info">
+      <div class="toast-title">Умный импорт</div>
+      <div class="toast-msg">Найдено <strong>${parsed.length}</strong> слов. Добавить и перевести автоматически?</div>
+      <div class="toast-msg" style="margin-top:4px;font-size:11px;color:var(--muted)">~${parsed.length*3} секунд · расход лимита API</div>
+      <div class="toast-actions">
+        <button class="btn sm" onclick="cancelImport()">Отмена</button>
+        <button class="btn sm solid" onclick="doImport(true)">Добавить и перевести</button>
+      </div>
+    </div>`;
+  } else {
+    wrap.innerHTML=`<div class="toast info">
+      <div class="toast-title">Импорт слов</div>
+      <div class="toast-msg">Найдено <strong>${parsed.length}</strong> слов. Добавить в словарь?</div>
+      <div class="toast-actions">
+        <button class="btn sm" onclick="cancelImport()">Отмена</button>
+        <button class="btn sm solid" onclick="doImport(false)">Добавить</button>
+      </div>
+    </div>`;
+  }
 }
 function cancelImport(){document.getElementById('toast-wrap').style.display='none';window._importParsed=null;}
 
