@@ -88,7 +88,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .bnav{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;color:var(--muted);font-family:'Inter',sans-serif;font-size:11px;font-weight:500;cursor:pointer;transition:color .15s;padding:8px 0;}
 .bnav:hover{color:var(--txt2);}
 .bnav.active{color:var(--acc);}
-.bnav-icon{font-size:20px;line-height:1;}
+.bnav-icon{width:22px;height:22px;display:flex;align-items:center;justify-content:center;}
+.bnav-icon svg{width:22px;height:22px;}
 
 .tab-content{display:none;padding:1.25rem;animation:fu .18s ease;}
 .tab-content.active{display:block;}
@@ -415,6 +416,18 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* SCROLL TO TOP */
 .scroll-top-btn{position:fixed;bottom:calc(var(--nh)+16px);right:16px;z-index:150;width:40px;height:40px;border-radius:50%;background:var(--acc);color:#fff;border:none;font-size:18px;cursor:pointer;box-shadow:var(--sh-md);display:none;align-items:center;justify-content:center;transition:opacity .2s;}
 .scroll-top-btn.visible{display:flex;}
+/* ONBOARDING */
+.onb-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;animation:fu .25s ease;}
+.onb-card{background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:480px;padding:2rem 1.5rem 2.5rem;display:flex;flex-direction:column;gap:1.25rem;}
+.onb-step{display:none;flex-direction:column;align-items:center;text-align:center;gap:12px;}
+.onb-step.active{display:flex;}
+.onb-icon{font-size:52px;line-height:1;}
+.onb-title{font-size:20px;font-weight:700;color:var(--txt);font-family:'Playfair Display',serif;}
+.onb-desc{font-size:14px;color:var(--txt2);line-height:1.6;max-width:300px;}
+.onb-dots{display:flex;gap:6px;justify-content:center;}
+.onb-dot{width:6px;height:6px;border-radius:50%;background:var(--border2);transition:background .2s;}
+.onb-dot.active{background:var(--acc);width:18px;border-radius:3px;}
+.onb-actions{display:flex;gap:8px;}
 /* Очищаемые поля ввода — крестик справа */
 .inp-wrap{position:relative;display:flex;align-items:center;}
 .inp-wrap input{padding-right:32px !important;width:100%;}
@@ -467,10 +480,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </header>
 
   <nav class="bottom-nav">
-    <button class="bnav active" onclick="switchTab('dashboard',this)"><span class="bnav-icon">⌂</span><span>Главная</span></button>
-    <button class="bnav" onclick="switchTab('practice',this)"><span class="bnav-icon">▷</span><span>Практика</span></button>
-    <button class="bnav" onclick="switchTab('words',this)"><span class="bnav-icon">☰</span><span>Слова</span></button>
-    <button class="bnav" onclick="switchTab('settings',this)"><span class="bnav-icon">◈</span><span>Настройки</span></button>
+    <button class="bnav active" onclick="switchTab('dashboard',this)"><span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg></span><span>Главная</span></button>
+    <button class="bnav" onclick="switchTab('practice',this)"><span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"/></svg></span><span>Практика</span></button>
+    <button class="bnav" onclick="switchTab('words',this)"><span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></span><span>Слова</span></button>
+    <button class="bnav" onclick="switchTab('settings',this)"><span class="bnav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg></span><span>Настройки</span></button>
   </nav>
 
   <!-- DASHBOARD -->
@@ -748,8 +761,73 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
 </div>
 
+<!-- ONBOARDING -->
+<div class="onb-overlay" id="onb-overlay" style="display:none">
+  <div class="onb-card">
+    <div class="onb-step active" id="onb-0">
+      <div class="onb-icon">📖</div>
+      <div class="onb-title">Добро пожаловать в Lexis</div>
+      <div class="onb-desc">Семейный словарь для изучения английских слов. Работает как Anki — чем лучше знаешь слово, тем реже оно повторяется.</div>
+    </div>
+    <div class="onb-step" id="onb-1">
+      <div class="onb-icon">➕</div>
+      <div class="onb-title">Добавляй слова</div>
+      <div class="onb-desc">Перейди в раздел <strong>Слова</strong> и добавь первые слова. Можно по одному или списком через быстрый импорт.</div>
+    </div>
+    <div class="onb-step" id="onb-2">
+      <div class="onb-icon">🃏</div>
+      <div class="onb-title">Практикуйся каждый день</div>
+      <div class="onb-desc">4 режима: карточки, выбор ответа, написать и пары. Занимайся хотя бы 10 минут в день — и слова запомнятся надолго.</div>
+    </div>
+    <div class="onb-step" id="onb-3">
+      <div class="onb-icon">🎯</div>
+      <div class="onb-title">Ставь дневную цель</div>
+      <div class="onb-desc">В настройках выбери сколько слов хочешь повторять в день. Следи за прогрессом на главной странице.</div>
+    </div>
+    <div class="onb-dots">
+      <div class="onb-dot active" id="onb-dot-0"></div>
+      <div class="onb-dot" id="onb-dot-1"></div>
+      <div class="onb-dot" id="onb-dot-2"></div>
+      <div class="onb-dot" id="onb-dot-3"></div>
+    </div>
+    <div class="onb-actions">
+      <button class="btn full" id="onb-skip" onclick="closeOnboarding()">Пропустить</button>
+      <button class="btn solid full" id="onb-next" onclick="onbNext()">Далее →</button>
+    </div>
+  </div>
+</div>
+
 <script>
-// ── STATE ─────────────────────────────────────
+// ── ONBOARDING ────────────────────────────────
+let _onbStep=0;
+const _onbTotal=4;
+function showOnboarding(){
+  document.getElementById('onb-overlay').style.display='flex';
+  _onbStep=0;_onbRender();
+}
+function closeOnboarding(){
+  document.getElementById('onb-overlay').style.display='none';
+  localStorage.setItem('lx_onb','1');
+  // После онбординга — переходим в раздел Слова
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-words').classList.add('active');
+  document.querySelectorAll('.bnav')[2].classList.add('active');
+}
+function onbNext(){
+  if(_onbStep<_onbTotal-1){_onbStep++;_onbRender();}
+  else closeOnboarding();
+}
+function _onbRender(){
+  for(let i=0;i<_onbTotal;i++){
+    document.getElementById('onb-'+i).classList.toggle('active',i===_onbStep);
+    document.getElementById('onb-dot-'+i).classList.toggle('active',i===_onbStep);
+  }
+  const isLast=_onbStep===_onbTotal-1;
+  document.getElementById('onb-next').textContent=isLast?'Начать! 🚀':'Далее →';
+  document.getElementById('onb-skip').style.display=isLast?'none':'block';
+}
+</script>
 let CU=null,words=[],wF='all',dir='en';
 let sortAZ=null;
 let listPage=0;
@@ -917,13 +995,16 @@ async function authLogin(){
 
 async function lok(u){
   CU=u;
-  // Храним в localStorage только минимум — без pass_hash и salt
   const safe={id:u.id,name:u.name,tg_id:u.tg_id,daily_goal:u.daily_goal,streak:u.streak,last_practice:u.last_practice,settings:u.settings};
   localStorage.setItem('lx',JSON.stringify(safe));
   document.getElementById('header-username').textContent=u.name;
   document.getElementById('screen-auth').classList.remove('active');
   document.getElementById('screen-app').classList.add('active');
   loadSettings();await loadWords();updStr();
+  // Показываем онбординг только при первом входе
+  if(!localStorage.getItem('lx_onb')&&words.length===0){
+    setTimeout(showOnboarding,600);
+  }
 }
 
 function logout(){
@@ -1245,8 +1326,7 @@ async function startImport(){
     for(const line of lines){
       const sep=line.includes('—')?'—':line.includes('\t')?'\t':'-';
       const p=line.split(sep).map(s=>s.trim());
-      if(p.length>=2&&p[0]&&p[1])parsed.push({en:p[0].toLowerCase(),ru:p[1]});
-    }
+      if(p.length>=2&&p[0]&&p[1])parsed.push({en:p[0].toLowerCase(),ru:p[1]});    }
     if(!parsed.length){showToast('error','Ошибка','Ничего не распознано');return;}
   }
 
@@ -2078,7 +2158,7 @@ function rTY(w){
       <span class="skip-link" onclick="sI++;renderCard()">Пропустить</span>
       <span class="hint-link" onclick="showHint()">Подсказка 💡</span>
     </div>`;
-  if(settings.auto_speak!==false)speak(w.en);
+  if(d==='en'&&settings.auto_speak!==false)speak(w.en);
   setTimeout(()=>{const i=document.getElementById('tyi');if(i)i.focus();},50);
   startQTimer(()=>{
     const res=document.getElementById('tyr');
