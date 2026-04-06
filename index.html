@@ -134,8 +134,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .pm-icon{font-size:26px;margin-bottom:10px;}
 .pm-title{font-size:14px;font-weight:600;color:var(--txt);margin-bottom:3px;}
 .pm-desc{font-size:11px;color:var(--muted);line-height:1.4;}
-.direction-row{display:flex;align-items:center;gap:6px;padding:.75rem 0;flex-wrap:nowrap;overflow-x:auto;}
-.dir-label{font-size:13px;color:var(--txt2);font-weight:500;white-space:nowrap;flex-shrink:0;}
+.direction-row{display:flex;flex-direction:column;gap:8px;padding:.75rem 0;}
+.dir-label{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+.dir-btns{display:flex;gap:6px;}
+.dir-btns .pill{flex:1;text-align:center;white-space:nowrap;}
 
 /* WORDS TAB */
 .add-section{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:1.25rem;margin-bottom:1rem;box-shadow:var(--sh);}
@@ -252,11 +254,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .fc-swipe-bg-right{background:var(--good-bg);color:var(--good);}
 .fc-swipe-bg svg{width:40px;height:40px;}
 /* Подсказка свайпа */
-.swipe-hint-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0 4px;opacity:0;transition:opacity .5s;}
+.swipe-hint-bar{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 0 4px;opacity:0;transition:opacity .5s;}
 .swipe-hint-bar.visible{opacity:1;}
-.swipe-hint-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.03em;text-transform:uppercase;}
-.swipe-hint-item svg{width:24px;height:24px;flex-shrink:0;color:var(--muted);}
-.swipe-hint-sep{width:1px;height:20px;background:var(--border);}
+.swipe-hint-icon-svg{width:64px;height:40px;color:var(--muted);}
+.swipe-hint-text{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.02em;text-align:center;}
 .session-header{display:flex;align-items:center;gap:12px;padding:1rem 1.25rem;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:var(--sh);}
 .session-progress{flex:1;display:flex;flex-direction:column;gap:5px;}
 .session-pbar{height:6px;background:var(--border);border-radius:3px;}
@@ -554,10 +555,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="pm-card" onclick="startSession('match')"><div class="pm-icon">🔗</div><div class="pm-title">Пары</div><div class="pm-desc">Соедини слова с переводом</div></div>
     </div>
     <div class="direction-row">
-      <span class="dir-label">Направление:</span>
-      <button class="pill" id="dir-en" onclick="setDir('en')">EN → RU</button>
-      <button class="pill" id="dir-ru" onclick="setDir('ru')">RU → EN</button>
-      <button class="pill active" id="dir-mix" onclick="setDir('mix')">Случайное</button>
+      <span class="dir-label">Направление</span>
+      <div class="dir-btns">
+        <button class="pill" id="dir-en" onclick="setDir('en')">EN → RU</button>
+        <button class="pill" id="dir-ru" onclick="setDir('ru')">RU → EN</button>
+        <button class="pill active" id="dir-mix" onclick="setDir('mix')">Случайное</button>
+      </div>
     </div>
   </div>
 
@@ -661,8 +664,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div id="timer-settings-extra">
         <div class="setting-row" id="timer-row-sec">
           <div>
-            <div class="setting-label">Секунд на вопрос</div>
-            <div class="setting-desc">От 5 до 120 секунд</div>
+            <div class="setting-label">Секунд на слово</div>
+            <div class="setting-desc">Общее время = слов × секунд на слово</div>
           </div>
           <div class="setting-control">
             <input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/>
@@ -1950,8 +1953,33 @@ function startSession(mode,pool){
   sW=srsQ(src,getSessionSize(mode));
   document.getElementById('session-overlay').classList.add('active');
   const clock=document.getElementById('session-clock');
-  clock.style.display=isTimerActive(mode)?'block':'none';
+  if(isTimerActive(mode)){
+    clock.style.display='block';
+    // Таймер на всё упражнение
+    const total=sW.length*(settings.timer_sec||30);
+    sessionTimeLeft=total;
+    _updateSessionClock();
+    sessionTimerInterval=setInterval(()=>{
+      sessionTimeLeft--;
+      _updateSessionClock();
+      if(sessionTimeLeft<=0){
+        clearInterval(sessionTimerInterval);sessionTimerInterval=null;
+        showRes(); // время вышло — завершаем сессию
+      }
+    },1000);
+  }else{
+    clock.style.display='none';
+  }
   renderCard();
+}
+
+function _updateSessionClock(){
+  const clock=document.getElementById('session-clock');
+  if(!clock)return;
+  const m=Math.floor(sessionTimeLeft/60);
+  const s=sessionTimeLeft%60;
+  clock.textContent=m>0?`${m}:${String(s).padStart(2,'0')}`:`${s}с`;
+  clock.style.color=sessionTimeLeft<=10?'var(--danger)':sessionTimeLeft<=30?'var(--warn)':'var(--txt2)';
 }
 
 function closeSession(){
@@ -2149,23 +2177,10 @@ function toggleTheme(){
   if(t)setTheme(t,false);
 })();
 
-function startQTimer(onExpire){
-  if(!isTimerActive(sM))return;
-  if(sessionTimerInterval)clearInterval(sessionTimerInterval);
-  sessionTimeLeft=settings.timer_sec||30;
-  const clock=document.getElementById('session-clock');
-  if(clock){clock.textContent=sessionTimeLeft+'с';clock.style.color='var(--warn)';}
-  sessionTimerInterval=setInterval(()=>{
-    sessionTimeLeft--;
-    if(clock){
-      clock.textContent=sessionTimeLeft+'с';
-      clock.style.color=sessionTimeLeft<=5?'var(--danger)':'var(--warn)';
-    }
-    if(sessionTimeLeft<=0){clearInterval(sessionTimerInterval);onExpire();}
-  },1000);
-}
-
-function stopQTimer(){if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}}
+// startQTimer больше не запускает новый таймер — таймер идёт на всю сессию.
+// Оставлен для обратной совместимости вызовов в карточках.
+function startQTimer(onExpire){ /* таймер сессионный, не пословный */ }
+function stopQTimer(){ /* noop — таймер не останавливается между словами */ }
 function updP(){
   const t=sW.length;
   if(!t)return;
@@ -2203,12 +2218,8 @@ function rFC(w){
       ?`<div class="fc-context"><div class="fc-ctx-en">${e(w.example_en)}</div><div class="fc-ctx-ru">${e(w.example_ru)}</div></div>`
       :'';
     sb.innerHTML=`<div class="fc-card" style="cursor:default;position:relative;overflow:hidden">
-      <div class="fc-swipe-bg fc-swipe-bg-left">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-      </div>
-      <div class="fc-swipe-bg fc-swipe-bg-right">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9,12 12,15 15,9"/></svg>
-      </div>
+      <div class="fc-swipe-bg fc-swipe-bg-left"></div>
+      <div class="fc-swipe-bg fc-swipe-bg-right"></div>
       <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px">
       <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
         <div class="fc-word">${e(q)}</div>
@@ -2224,21 +2235,15 @@ function rFC(w){
       <button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button>
     </div>
     ${sI<3?`<div class="swipe-hint-bar visible">
-      <div class="swipe-hint-item">
-        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20 16c0-1.1-.9-2-2-2h-1V8a2 2 0 00-4 0v8l-2-1.5A1.5 1.5 0 009 16.5l4 5.5H20v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M6 13l-3 3m3-3l3 3m-3-3V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        <span>свайп влево</span>
-      </div>
-      <div class="swipe-hint-sep"></div>
-      <div class="swipe-hint-item">
-        <span>свайп вправо</span>
-        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M12 16c0-1.1.9-2 2-2h1V8a2 2 0 014 0v8l2-1.5A1.5 1.5 0 0123 16.5l-4 5.5H12v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
-          <path d="M26 13l3 3m-3-3l-3 3m3-3V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
+      <svg class="swipe-hint-icon-svg" viewBox="0 0 64 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- Стрелка влево -->
+        <path d="M14 20H4m0 0l6-6m-6 6l6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+        <!-- Рука -->
+        <path d="M32 28c0 0-1 0-2-1l-5-6a1.5 1.5 0 012-2l3 2V12a2 2 0 014 0v8a2 2 0 012-2h0a2 2 0 012 2v1a2 2 0 012-1.5h0A2 2 0 0142 22v6H32z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+        <!-- Стрелка вправо -->
+        <path d="M50 20h10m0 0l-6-6m6 6l-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" opacity=".5"/>
+      </svg>
+      <div class="swipe-hint-text">Проведи влево — не знал · вправо — знал</div>
     </div>`:''}`;
     if(d==='en'&&settings.auto_speak!==false)speak(w.en);
   }
