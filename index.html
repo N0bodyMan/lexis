@@ -252,6 +252,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .fc-card:hover{border-color:var(--acc);}
 .fc-word{font-family:'Playfair Display',serif;font-size:48px;color:var(--txt);line-height:1.1;word-break:break-word;overflow-wrap:anywhere;max-width:100%;}
 .fc-transcription{font-size:13px;color:var(--muted);}
+.fc-alt-trans{font-size:13px;color:var(--muted);margin-top:4px;text-align:center;}
+.fc-alt-trans span{font-style:italic;}
 .fc-hint{font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:500;}
 .fc-answer{font-size:22px;color:var(--acc);font-weight:600;}
 .fc-answer-pills{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4px;}
@@ -534,9 +536,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
     <div class="direction-row">
       <span class="dir-label">Направление:</span>
-      <button class="pill active" id="dir-en" onclick="setDir('en')">EN → RU</button>
+      <button class="pill" id="dir-en" onclick="setDir('en')">EN → RU</button>
       <button class="pill" id="dir-ru" onclick="setDir('ru')">RU → EN</button>
-      <button class="pill" id="dir-mix" onclick="setDir('mix')">Случайное</button>
+      <button class="pill active" id="dir-mix" onclick="setDir('mix')">Случайное</button>
     </div>
   </div>
 
@@ -834,7 +836,7 @@ function _onbRender(){
 }
 </script>
 <script>
-let CU=null,words=[],wF='all',dir='en';
+let CU=null,words=[],wF='all',dir='mix';
 let sortAZ=null;
 let listPage=0;
 let sM=null,sW=[],sI=0,sS=0,sMist=[];
@@ -1521,6 +1523,12 @@ async function upScore(id, grade){
   }
 }
 
+// Вариант B: слово засчитывается в дневную цель только когда
+// интервал SM-2 >= 1 день (1440 мин) — значит реально закрепилось
+function markDailyWordIfLearned(id, sm2Intv){
+  if(sm2Intv>=1440)markDailyWord(id);
+}
+
 // Загружаем SM-2 кэш в объекты слов после loadWords
 function loadSM2Cache(){
   try{
@@ -1987,12 +1995,16 @@ function applyTranslation(t){
   const firstInput=document.querySelector('#trans-rows .trans-row input');
   if(firstInput&&!firstInput.value.trim()){firstInput.value=t;}
   else{
-    // Добавляем новую строку перевода
     addTransRow();
     const rows=document.querySelectorAll('#trans-rows .trans-row input');
     rows[rows.length-1].value=t;
   }
-  document.getElementById('autotrans-row').innerHTML='';
+  // Не скрываем пилюли — пользователь может выбрать ещё один перевод
+  // Только убираем выбранный вариант из списка
+  const pills=document.querySelectorAll('#autotrans-row .autotrans-pill');
+  pills.forEach(p=>{
+    if(p.textContent.trim()==='+ '+t||p.textContent.trim()===t)p.remove();
+  });
 }
 
 // ── ТЕМА ─────────────────────────────────────
@@ -2054,6 +2066,11 @@ function rFC(w){
   const aHtml=Array.isArray(a)&&a.length>1
     ?`<div class="fc-answer-pills">${a.map(t=>`<span class="fc-answer-pill">${e(t)}</span>`).join('')}</div>`
     :`<div class="fc-answer">${e(Array.isArray(a)?a[0]:a)}</div>`;
+  // При RU→EN на обратной стороне показываем доп. переводы слова если есть
+  const allTrans=getWordTranslations(w);
+  const altHtml=d==='ru'&&allTrans.length>1
+    ?`<div class="fc-alt-trans">${allTrans.slice(1).map(t=>`<span>${e(t)}</span>`).join(', ')}</div>`
+    :'';
   const sb=document.getElementById('sbody');
   if(!fcR){
     sb.innerHTML=`<div class="fc-card" onclick="rvFC()">
@@ -2078,6 +2095,7 @@ function rFC(w){
       </div>
       ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
       ${aHtml}
+      ${altHtml}
       ${ctxHtml}
     </div>
     <div class="rate-row">
@@ -2090,8 +2108,12 @@ function rFC(w){
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
 async function fcRt(id,grade){
   const g=grade<=0?0:grade===1?1:2;
-  if(g>0){sS++;markDailyWord(id);}else sMist.push(sW[sI]);
-  await upScore(id,grade);fcR=false;sI++;renderCard();
+  const w=sW[sI];
+  if(g>0){sS++;}else sMist.push(w);
+  await upScore(id,grade);
+  // Считаем в дневную цель только если интервал >= 1 день (Вариант B)
+  markDailyWordIfLearned(id, w.sm2_intv||0);
+  fcR=false;sI++;renderCard();
 }
 
 // CHOICE — правильный любой перевод из списка
@@ -2137,7 +2159,7 @@ async function aCH(wid, optId, isCorrect, timedOut){
     const ex=document.getElementById('we2');ex.style.display='block';
     const allTrans=getDir()==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
     ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+allTrans.join(' / ');
-  }else{sS++;markDailyWord(sW[sI]?.id);}
+  }else{sS++;markDailyWordIfLearned(sW[sI]?.id, sW[sI]?.sm2_intv||0);}
   await upScore(wid,ok?2:-1);
   document.getElementById('nxt').style.display='block';
 }
@@ -2224,10 +2246,10 @@ async function chkTY(){
   const primaryCorrect=d==='en'?getPrimary(w):w.en;
   if(r==='ok'){
     res.className='t-result t-ok';res.textContent='✓ Верно!';
-    sS++;markDailyWord(wid);await upScore(wid,2);sI++;setTimeout(renderCard,1200);
+    sS++;await upScore(wid,2);markDailyWordIfLearned(wid,w.sm2_intv||0);sI++;setTimeout(renderCard,1200);
   }else if(r==='near'){
     res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+primaryCorrect;
-    await upScore(wid,1);markDailyWord(wid);sI++;setTimeout(renderCard,1800);
+    await upScore(wid,1);markDailyWordIfLearned(wid,w.sm2_intv||0);sI++;setTimeout(renderCard,1800);
   }else{
     res.className='t-result t-fail';res.textContent='✗ '+primaryCorrect;
     sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);
@@ -2284,7 +2306,8 @@ async function selM(lang,id){
       const errs=mSt.errors?.[id]||0;
       const grade=errs===0?2:errs===1?1:0;
       await upScore(id,grade===2?2:grade===1?1:-1);
-      markDailyWord(id);
+      const wMatch=words.find(x=>x.id===id);
+      markDailyWordIfLearned(id, wMatch?.sm2_intv||0);
       msg.textContent='✓ Верно!';
       sI=mSt.matched.length;updP();
       if(mSt.matched.length===mSt.pairs.length){
