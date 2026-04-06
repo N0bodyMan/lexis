@@ -238,16 +238,25 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* SESSION */
 .overlay{display:none;position:fixed;inset:0;z-index:200;background:var(--bg);flex-direction:column;overflow-y:auto;}
 .overlay.active{display:flex;}
-/* Анимация свайпа карточки */
-@keyframes swipeLeft{from{transform:translateX(0) rotate(0deg);opacity:1;}to{transform:translateX(-120%) rotate(-15deg);opacity:0;}}
-@keyframes swipeRight{from{transform:translateX(0) rotate(0deg);opacity:1;}to{transform:translateX(120%) rotate(15deg);opacity:0;}}
-.fc-swipe-left{animation:swipeLeft .32s ease forwards;}
-.fc-swipe-right{animation:swipeRight .32s ease forwards;}
+/* Физический свайп карточки */
+.fc-card{position:relative;overflow:hidden;will-change:transform;}
+.fc-card.dragging{transition:none !important;cursor:grabbing;user-select:none;}
+.fc-card.snap-back{transition:transform .4s cubic-bezier(.175,.885,.32,1.275),opacity .3s ease !important;}
+@keyframes flyLeft{0%{opacity:1;}100%{transform:translateX(-140%) rotate(-22deg);opacity:0;}}
+@keyframes flyRight{0%{opacity:1;}100%{transform:translateX(140%) rotate(22deg);opacity:0;}}
+.fc-fly-left{animation:flyLeft .38s cubic-bezier(.4,0,1,1) forwards;}
+.fc-fly-right{animation:flyRight .38s cubic-bezier(.4,0,1,1) forwards;}
+/* Фоновые индикаторы при свайпе */
+.fc-swipe-bg{position:absolute;inset:0;border-radius:var(--r-xl);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .12s;pointer-events:none;z-index:0;}
+.fc-swipe-bg-left{background:var(--danger-bg);color:var(--danger);}
+.fc-swipe-bg-right{background:var(--good-bg);color:var(--good);}
+.fc-swipe-bg svg{width:40px;height:40px;}
 /* Подсказка свайпа */
-.swipe-hint-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px 0 2px;opacity:0;transition:opacity .3s;}
+.swipe-hint-bar{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px 0 4px;opacity:0;transition:opacity .5s;}
 .swipe-hint-bar.visible{opacity:1;}
-.swipe-hint-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);}
-.swipe-hint-icon{font-size:18px;}
+.swipe-hint-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.03em;text-transform:uppercase;}
+.swipe-hint-item svg{width:24px;height:24px;flex-shrink:0;color:var(--muted);}
+.swipe-hint-sep{width:1px;height:20px;background:var(--border);}
 .session-header{display:flex;align-items:center;gap:12px;padding:1rem 1.25rem;background:var(--card);border-bottom:1px solid var(--border);flex-shrink:0;box-shadow:var(--sh);}
 .session-progress{flex:1;display:flex;flex-direction:column;gap:5px;}
 .session-pbar{height:6px;background:var(--border);border-radius:3px;}
@@ -705,6 +714,28 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <input type="checkbox" id="set-auto-speak" onchange="saveSetting('auto_speak',this.checked)"/>
           <span class="toggle-slider"></span>
         </label>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-title">Резервная копия</div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Экспорт словаря</div>
+          <div class="setting-desc">Скачать все слова в формате CSV</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn sm" onclick="exportWords()">Экспорт</button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Импорт из CSV</div>
+          <div class="setting-desc">Восстановить слова из файла экспорта</div>
+        </div>
+        <div class="setting-control">
+          <button class="btn sm" onclick="document.getElementById('import-file').click()">Импорт</button>
+          <input type="file" id="import-file" accept=".csv" style="display:none" onchange="importWords(this)"/>
+        </div>
       </div>
     </div>
     <div class="settings-section">
@@ -1958,27 +1989,81 @@ function _doCloseSession(){
 })();
 
 // ── SCROLL TO TOP ─────────────────────────────
-// ── СВАЙПЫ В СЕССИИ ───────────────────────────
+// ── СВАЙПЫ В СЕССИИ (физика) ──────────────────
 (function initSwipe(){
-  let tx=0,ty=0,startT=0;
+  let startX=0,startY=0,startT=0,dragging=false,card=null,lastX=0,velX=0;
+  const THRESHOLD=70;
+
+  function getCard(){return document.querySelector('#sbody .fc-card');}
+
   document.addEventListener('touchstart',ev=>{
     const ov=document.getElementById('session-overlay');
     if(!ov.classList.contains('active'))return;
-    tx=ev.touches[0].clientX;ty=ev.touches[0].clientY;startT=Date.now();
+    if(sM!=='flashcard')return;
+    card=getCard();
+    if(!card)return;
+    startX=ev.touches[0].clientX;
+    startY=ev.touches[0].clientY;
+    lastX=startX;
+    velX=0;
+    startT=Date.now();
+    dragging=true;
+    card.classList.add('dragging');
   },{passive:true});
-  document.addEventListener('touchend',ev=>{
-    const ov=document.getElementById('session-overlay');
-    if(!ov.classList.contains('active'))return;
-    if(document.querySelector('.result'))return;
-    const dx=ev.changedTouches[0].clientX-tx;
-    const dy=ev.changedTouches[0].clientY-ty;
-    const dt=Date.now()-startT;
-    if(Math.abs(dx)<40||Math.abs(dy)>Math.abs(dx)||dt>500)return;
-    if(sM==='flashcard'){
-      if(!fcR){rvFC();return;}
-      if(dx>0)fcRt(sW[sI].id,3);   // свайп вправо = знал ✓
-      else    fcRt(sW[sI].id,-1);  // свайп влево = не знал
+
+  document.addEventListener('touchmove',ev=>{
+    if(!dragging||!card)return;
+    const cx=ev.touches[0].clientX;
+    const cy=ev.touches[0].clientY;
+    const dx=cx-startX;
+    const dy=cy-startY;
+    // Определяем направление в самом начале движения
+    if(Math.abs(dy)>Math.abs(dx)*1.3&&Math.abs(dy)>12&&Math.abs(dx)<20){
+      dragging=false;
+      card.style.transform='';
+      card.classList.remove('dragging');
+      return;
     }
+    velX=cx-lastX;
+    lastX=cx;
+    const rotate=dx*0.06;
+    card.style.transform=`translateX(${dx}px) rotate(${rotate}deg)`;
+    // Плавный фоновый индикатор
+    const pct=Math.min(Math.abs(dx)/THRESHOLD,1);
+    const bgLeft=card.querySelector('.fc-swipe-bg-left');
+    const bgRight=card.querySelector('.fc-swipe-bg-right');
+    if(bgLeft)bgLeft.style.opacity=dx<-10?pct*0.9:0;
+    if(bgRight)bgRight.style.opacity=dx>10?pct*0.9:0;
+  },{passive:true});
+
+  document.addEventListener('touchend',ev=>{
+    if(!dragging||!card)return;
+    dragging=false;
+    card.classList.remove('dragging');
+    const dx=ev.changedTouches[0].clientX-startX;
+    const dy=ev.changedTouches[0].clientY-startY;
+    // Флик — быстрое движение даже на малое расстояние
+    const flick=Math.abs(velX)>8&&Math.abs(dx)>30;
+    const far=Math.abs(dx)>=THRESHOLD;
+    if((far||flick)&&Math.abs(dy)<Math.abs(dx)*1.8&&fcR){
+      if(dx>0){
+        card.classList.add('fc-fly-right');
+        setTimeout(()=>fcRt(sW[sI].id,3),80);
+      }else{
+        card.classList.add('fc-fly-left');
+        setTimeout(()=>fcRt(sW[sI].id,-1),80);
+      }
+    }else{
+      // Плавный возврат с пружиной
+      card.classList.add('snap-back');
+      card.style.transform='translateX(0) rotate(0deg)';
+      const bgLeft=card.querySelector('.fc-swipe-bg-left');
+      const bgRight=card.querySelector('.fc-swipe-bg-right');
+      if(bgLeft)bgLeft.style.opacity=0;
+      if(bgRight)bgRight.style.opacity=0;
+      setTimeout(()=>card?.classList.remove('snap-back'),420);
+    }
+    card=null;
   },{passive:true});
 })();
 
@@ -2117,7 +2202,14 @@ function rFC(w){
     const ctxHtml=w.example_en&&w.example_ru
       ?`<div class="fc-context"><div class="fc-ctx-en">${e(w.example_en)}</div><div class="fc-ctx-ru">${e(w.example_ru)}</div></div>`
       :'';
-    sb.innerHTML=`<div class="fc-card" style="cursor:default">
+    sb.innerHTML=`<div class="fc-card" style="cursor:default;position:relative;overflow:hidden">
+      <div class="fc-swipe-bg fc-swipe-bg-left">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <div class="fc-swipe-bg fc-swipe-bg-right">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="9,12 12,15 15,9"/></svg>
+      </div>
+      <div style="position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:12px">
       <div style="display:flex;align-items:flex-start;justify-content:center;gap:8px">
         <div class="fc-word">${e(q)}</div>
         ${d==='en'?`<button class="speak-btn" style="margin-top:12px" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
@@ -2125,39 +2217,41 @@ function rFC(w){
       ${w.transcription&&d==='en'?`<div class="fc-transcription">[${e(w.transcription)}]</div>`:''}
       ${aHtml}
       ${ctxHtml}
+      </div>
     </div>
     <div class="rate-row">
       <button class="btn danger-btn" onclick="fcRt(${w.id},-1)">Не знал</button>
       <button class="btn acc" onclick="fcRt(${w.id},3)">Знал ✓</button>
     </div>
     ${sI<3?`<div class="swipe-hint-bar visible">
-      <div class="swipe-hint-item"><span class="swipe-hint-icon">👈</span><span>не знал</span></div>
-      <div class="swipe-hint-item"><span class="swipe-hint-icon">👉</span><span>знал</span></div>
+      <div class="swipe-hint-item">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20 16c0-1.1-.9-2-2-2h-1V8a2 2 0 00-4 0v8l-2-1.5A1.5 1.5 0 009 16.5l4 5.5H20v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M6 13l-3 3m3-3l3 3m-3-3V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>свайп влево</span>
+      </div>
+      <div class="swipe-hint-sep"></div>
+      <div class="swipe-hint-item">
+        <span>свайп вправо</span>
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 16c0-1.1.9-2 2-2h1V8a2 2 0 014 0v8l2-1.5A1.5 1.5 0 0123 16.5l-4 5.5H12v-6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+          <path d="M26 13l3 3m-3-3l-3 3m3-3V8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
     </div>`:''}`;
     if(d==='en'&&settings.auto_speak!==false)speak(w.en);
   }
 }
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
 
-function animateCardAndThen(direction, cb){
-  // Находим карточку и анимируем её улёт
-  const card=document.querySelector('#sbody .fc-card');
-  if(!card){cb();return;}
-  card.classList.add(direction==='right'?'fc-swipe-right':'fc-swipe-left');
-  setTimeout(cb, 320);
-}
-
 async function fcRt(id,grade){
   const g=grade<=0?0:grade===1?1:2;
   const w=sW[sI];
   if(g>0){sS++;}else sMist.push(w);
-  // Анимируем карточку перед переходом
-  const dir=g>0?'right':'left';
-  animateCardAndThen(dir, async()=>{
-    await upScore(id,grade);
-    markDailyWordIfLearned(id, w.sm2_intv||0);
-    fcR=false;sI++;renderCard();
-  });
+  await upScore(id,grade);
+  markDailyWordIfLearned(id, w.sm2_intv||0);
+  fcR=false;sI++;renderCard();
 }
 
 // CHOICE — правильный любой перевод из списка
@@ -2378,6 +2472,71 @@ function showRes(){
   const mh=sMist.length?`<div class="result-mistakes"><div class="result-mistakes-title">Ошибки — повтори:</div>${sMist.slice(0,5).map(w=>`<div class="mistake-item"><span class="mistake-en">${e(w.en)}</span><span class="mistake-ru">${e(getPrimary(w))}</span></div>`).join('')}</div>`:'';
   document.getElementById('sbody').innerHTML=`<div class="result"><div class="result-emoji">${emoji}</div><div class="result-big">${sS}<span style="font-size:32px;color:var(--muted)">/${tot}</span></div><div class="result-label">${pct}% верно</div><div class="result-sub">${pct>=80?'Отличный результат!':pct>=50?'Хороший прогресс!':'Продолжай практиковать'}</div>${mh}<div class="result-actions"><button class="btn" onclick="closeSession()">На главную</button><button class="btn solid" onclick="startSession('${sM}')">Ещё раз</button></div></div>`;
   document.getElementById('spbar').style.width='100%';document.getElementById('scounter').textContent=tot+' / '+tot;document.getElementById('sscore').textContent=sS;
+}
+
+// ── РЕЗЕРВНАЯ КОПИЯ ───────────────────────────
+function exportWords(){
+  if(!words.length){showSnack('Нет слов для экспорта');return;}
+  const rows=[['en','ru','transcription','score','review_count']];
+  words.forEach(w=>rows.push([
+    w.en||'',
+    w.ru||'',
+    w.transcription||'',
+    w.score||0,
+    w.review_count||0
+  ]));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`lexis_backup_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showSnack(`✓ Экспортировано ${words.length} слов`);
+}
+
+async function importWords(input){
+  const file=input.files[0];if(!file)return;
+  const text=await file.text();
+  input.value='';
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  if(lines.length<2){showSnack('Файл пустой или повреждён');return;}
+  // Пропускаем заголовок
+  const dataLines=lines[0].startsWith('"en"')||lines[0].startsWith('en')?lines.slice(1):lines;
+  const parsed=[];
+  for(const line of dataLines){
+    // Парсим CSV с кавычками
+    const cols=line.match(/("(?:[^"]|"")*"|[^,]*)/g)
+      ?.map(s=>s.replace(/^"|"$/g,'').replace(/""/g,'"'))||[];
+    const en=(cols[0]||'').trim().toLowerCase();
+    const ru=(cols[1]||'').trim();
+    if(en&&ru)parsed.push({en,ru,tr:cols[2]||''});
+  }
+  if(!parsed.length){showSnack('Не найдено слов в файле');return;}
+  showConfirm(
+    `Импорт ${parsed.length} слов`,
+    'Слова будут добавлены в словарь. Дубли пропустятся.',
+    async()=>{
+      let added=0;
+      const wrap=document.getElementById('toast-wrap');wrap.style.display='block';
+      wrap.innerHTML=`<div class="toast"><div class="toast-title">Импортирую...</div><div class="toast-pbar-wrap"><div class="toast-pbar" id="imp-pb2" style="width:0%"></div></div><div class="toast-msg" id="imp-st2">0 / ${parsed.length}</div></div>`;
+      const CHUNK=10;
+      for(let i=0;i<parsed.length;i+=CHUNK){
+        const chunk=parsed.slice(i,Math.min(i+CHUNK,parsed.length));
+        const results=await Promise.allSettled(
+          chunk.filter(p=>!words.find(w=>w.en===p.en)).map(p=>aW(CU.id,p.en,p.ru,p.tr))
+        );
+        results.forEach(r=>{if(r.status==='fulfilled'&&r.value){words.push(r.value);added++;}});
+        const done=Math.min(i+CHUNK,parsed.length);
+        const pb=document.getElementById('imp-pb2'),st=document.getElementById('imp-st2');
+        if(pb)pb.style.width=Math.round((done/parsed.length)*100)+'%';
+        if(st)st.textContent=done+' / '+parsed.length;
+      }
+      wordsToCache(words);renderDash();renderList();
+      wrap.innerHTML=`<div class="toast success"><div class="toast-title">✓ Готово</div><div class="toast-msg">Добавлено ${added} слов (дублей пропущено: ${parsed.length-added})</div><div class="toast-actions"><button class="btn sm solid" onclick="closeToast()">OK</button></div></div>`;
+    }
+  );
 }
 
 // ── NOTIFICATIONS ─────────────────────────────
