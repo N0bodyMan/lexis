@@ -196,6 +196,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .wi-word-row{display:flex;align-items:center;gap:6px;}
 .we{font-size:13px;font-weight:600;color:var(--txt);}
 .wtr{font-size:11px;color:var(--muted);}
+.wi-ctx-dot{font-size:10px;color:var(--acc);opacity:.7;flex-shrink:0;}
 .wr{font-size:12px;color:var(--txt2);margin-top:2px;}
 /* Кнопка озвучки — inline рядом со словом */
 .wi-speak{
@@ -270,7 +271,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* FLASHCARD */
 .fc-card{background:var(--card);border:1.5px solid var(--border);border-radius:var(--r-xl);padding:2.5rem 2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:12px;cursor:pointer;transition:all .15s;min-height:220px;margin-bottom:1.25rem;box-shadow:var(--sh-md);}
 .fc-card:hover{border-color:var(--acc);}
-.fc-word{font-family:'Playfair Display',serif;font-size:48px;color:var(--txt);line-height:1.1;word-break:break-word;overflow-wrap:anywhere;max-width:100%;}
+.fc-word{font-family:'Playfair Display',serif;font-size:clamp(28px,8vw,48px);color:var(--txt);line-height:1.1;word-break:break-word;overflow-wrap:anywhere;max-width:100%;hyphens:auto;}
 .fc-transcription{font-size:13px;color:var(--muted);}
 .fc-alt-trans{font-size:13px;color:var(--muted);margin-top:4px;text-align:center;}
 .fc-alt-trans span{font-style:italic;}
@@ -284,7 +285,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .rate-row .btn{flex:1;padding:13px 8px;}
 
 /* CHOICE */
-.q-word{font-family:'Playfair Display',serif;font-size:42px;line-height:1.2;margin-bottom:.5rem;}
+.q-word{font-family:'Playfair Display',serif;font-size:clamp(26px,7vw,42px);line-height:1.2;margin-bottom:.5rem;word-break:break-word;hyphens:auto;}
 .q-transcription{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
 .choices{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem;}
 .ch-btn{padding:14px 12px;border-radius:var(--r);border:1.5px solid var(--border);background:var(--card);font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;text-align:left;color:var(--txt);transition:all .15s;line-height:1.4;box-shadow:var(--sh);}
@@ -295,7 +296,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .wrong-explain{font-size:13px;color:var(--txt2);margin-bottom:10px;padding:10px 13px;background:var(--card2);border-radius:var(--r);display:none;line-height:1.5;border:1px solid var(--border);}
 
 /* TYPING */
-.t-question{font-family:'Playfair Display',serif;font-size:42px;margin-bottom:.5rem;line-height:1.2;}
+.t-question{font-family:'Playfair Display',serif;font-size:clamp(26px,7vw,42px);margin-bottom:.5rem;line-height:1.2;word-break:break-word;hyphens:auto;}
 .t-transcription{font-size:13px;color:var(--muted);margin-bottom:1.5rem;}
 .t-input-row{display:flex;gap:8px;margin-bottom:10px;}
 .t-result{font-size:13px;padding:10px 13px;border-radius:var(--r);margin-bottom:10px;display:none;font-weight:500;}
@@ -664,11 +665,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div id="timer-settings-extra">
         <div class="setting-row" id="timer-row-sec">
           <div>
-            <div class="setting-label">Секунд на слово</div>
-            <div class="setting-desc">Общее время = слов × секунд на слово</div>
+            <div class="setting-label">Минут на упражнение</div>
+            <div class="setting-desc">Общее время на всю сессию</div>
           </div>
           <div class="setting-control">
-            <input type="number" id="set-timer-sec" min="5" max="120" value="30" onchange="saveSetting('timer_sec',+this.value)"/>
+            <input type="number" id="set-timer-sec" min="1" max="30" value="5" onchange="saveSetting('timer_sec',+this.value)"/>
           </div>
         </div>
         <div class="setting-row" id="timer-row-modes" style="flex-direction:column;align-items:flex-start;gap:10px;">
@@ -1690,7 +1691,7 @@ function _renderListPage(reset){
       <div class="wi-check" onclick="toggleWordSelect(${w.id},event)">${sel?'✓':''}</div>
       <div class="wi-content">
         <div class="wi-word-row">
-          <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}
+          <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}${w.example_en?` <span class="wi-ctx-dot" title="Есть пример употребления">✦</span>`:''}
           <button class="wi-speak" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4L6 8H3a1 1 0 00-1 1v2a1 1 0 001 1h3l5 4V4z" fill="currentColor"/><path d="M14.5 6.5a4 4 0 010 7M16.5 4.5a7 7 0 010 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         ${transHtml}
@@ -1955,8 +1956,8 @@ function startSession(mode,pool){
   const clock=document.getElementById('session-clock');
   if(isTimerActive(mode)){
     clock.style.display='block';
-    // Таймер на всё упражнение
-    const total=sW.length*(settings.timer_sec||30);
+    // Таймер на всё упражнение (timer_sec теперь = минуты)
+    const total=(settings.timer_sec||5)*60;
     sessionTimeLeft=total;
     _updateSessionClock();
     sessionTimerInterval=setInterval(()=>{
@@ -2263,16 +2264,17 @@ async function fcRt(id,grade){
 function rCH(w){
   const d=getDir(),q=d==='en'?w.en:getPrimary(w);
   const allTrans=d==='en'?getWordTranslations(w):[w.en];
-  const primary=allTrans[0]; // показываем первый как правильный вариант
+  const primary=allTrans[0];
 
-  // Варианты ответов: правильный + 3 случайных чужих
   const oth=words.filter(x=>x.id!==w.id).sort(()=>Math.random()-.5).slice(0,3);
   const opts=[
     {id:w.id,t:primary,correct:true},
     ...oth.map(o=>({id:o.id,t:d==='en'?getPrimary(o):o.en,correct:false}))
   ].sort(()=>Math.random()-.5);
 
-  document.getElementById('sbody').innerHTML=`
+  const sb=document.getElementById('sbody');
+  sb.dataset.dir=d; // сохраняем направление — aCH читает отсюда
+  sb.innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:.5rem">
       <div class="q-word" style="margin-bottom:0">${e(q)}</div>
       ${d==='en'?`<button class="speak-btn" style="margin-top:8px" onclick="speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать">🔊</button>`:''}
@@ -2288,20 +2290,20 @@ async function aCH(wid, optId, isCorrect, timedOut){
   if(chA)return;chA=true;stopQTimer();
   const ok=!timedOut&&isCorrect;
   document.querySelectorAll('.ch-btn').forEach(b=>b.disabled=true);
-  // Подсвечиваем правильный вариант зелёным всегда
   document.querySelectorAll('.ch-btn').forEach(b=>{
     if(b.id.endsWith('-ok'))b.classList.add('ok');
   });
   if(!ok){
-    // Подсвечиваем выбранный неправильный красным
     if(optId!==-1){
       const wrongBtn=document.getElementById(`co${optId}-no`);
       if(wrongBtn)wrongBtn.classList.add('no');
     }
     sMist.push(sW[sI]);
     const ex=document.getElementById('we2');ex.style.display='block';
-    const allTrans=getDir()==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
-    ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+allTrans.join(' / ');
+    // Читаем сохранённое направление — не вызываем getDir() повторно
+    const savedDir=document.getElementById('sbody').dataset.dir||'en';
+    const correctAns=savedDir==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
+    ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+correctAns.join(' / ');
   }else{sS++;markDailyWordIfLearned(sW[sI]?.id, sW[sI]?.sm2_intv||0);}
   await upScore(wid,ok?2:-1);
   document.getElementById('nxt').style.display='block';
@@ -2491,13 +2493,16 @@ function exportWords(){
     w.review_count||0
   ]));
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
+  const filename=`lexis_backup_${new Date().toISOString().slice(0,10)}.csv`;
+  // data: URI — работает в Telegram Mini App и обычном браузере
+  const dataUri='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
   const a=document.createElement('a');
-  a.href=url;
-  a.download=`lexis_backup_${new Date().toISOString().slice(0,10)}.csv`;
+  a.href=dataUri;
+  a.download=filename;
+  a.style.display='none';
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  document.body.removeChild(a);
   showSnack(`✓ Экспортировано ${words.length} слов`);
 }
 
