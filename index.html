@@ -2493,17 +2493,60 @@ function exportWords(){
     w.review_count||0
   ]));
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const filename=`lexis_backup_${new Date().toISOString().slice(0,10)}.csv`;
-  // data: URI — работает в Telegram Mini App и обычном браузере
-  const dataUri='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  const a=document.createElement('a');
-  a.href=dataUri;
-  a.download=filename;
-  a.style.display='none';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  showSnack(`✓ Экспортировано ${words.length} слов`);
+  const date=new Date().toISOString().slice(0,10);
+
+  // Пробуем скачать через браузер (работает в Safari/Chrome, не в Telegram WebView)
+  try{
+    const a=document.createElement('a');
+    a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
+    a.download=`lexis_backup_${date}.csv`;
+    a.style.display='none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }catch(_){}
+
+  // Показываем модалку с текстом для копирования (работает везде)
+  _showExportModal(csv, date, words.length);
+}
+
+function _showExportModal(csv, date, count){
+  // Убираем старую если есть
+  document.getElementById('export-modal')?.remove();
+
+  const el=document.createElement('div');
+  el.id='export-modal';
+  el.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
+  el.innerHTML=`
+    <div style="background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:480px;padding:1.5rem;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:15px;font-weight:600;color:var(--txt)">Резервная копия</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">${count} слов · ${date}</div>
+        </div>
+        <button onclick="document.getElementById('export-modal').remove()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
+      </div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.5;">
+        Нажми <strong>Скопировать</strong> и вставь текст в заметки или отправь себе в Telegram. При импорте вставь этот текст в поле импорта.
+      </div>
+      <textarea id="export-csv-text" readonly style="width:100%;height:140px;font-family:monospace;font-size:11px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r);padding:10px;color:var(--txt2);resize:none;box-sizing:border-box;">${csv.replace(/</g,'&lt;')}</textarea>
+      <button onclick="_copyExportCsv()" class="btn solid full" style="width:100%">Скопировать текст</button>
+    </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click', ev=>{if(ev.target===el)el.remove();});
+}
+
+async function _copyExportCsv(){
+  const ta=document.getElementById('export-csv-text');
+  if(!ta)return;
+  try{
+    await navigator.clipboard.writeText(ta.value);
+    showSnack('✓ Скопировано в буфер обмена');
+  }catch(_){
+    ta.select();
+    document.execCommand('copy');
+    showSnack('✓ Скопировано');
+  }
 }
 
 async function importWords(input){
