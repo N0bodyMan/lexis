@@ -2703,9 +2703,7 @@ function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 
 // ── SPEECH ────────────────────────────────────
 let _speakBtn=null;
-// ── SPEECH ────────────────────────────────────
-let _speakBtn=null;
-let _audioCache={}; // кэш URL аудио в памяти на сессию
+let _audioCache={};
 
 function speak(text, evOrBtn){
   const btn=evOrBtn instanceof Event?evOrBtn.currentTarget:(evOrBtn||null);
