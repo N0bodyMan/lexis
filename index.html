@@ -312,7 +312,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .speak-btn{background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1;opacity:.5;transition:opacity .15s;flex-shrink:0;align-self:flex-start;margin-top:6px;}
 .speak-btn:hover{opacity:1;}
 .speak-btn.speaking{opacity:1;animation:speakPulse .6s ease-in-out infinite alternate;}
+.speak-btn.loading{opacity:1;animation:speakSpin 1s linear infinite;}
 @keyframes speakPulse{from{transform:scale(1);}to{transform:scale(1.25);}}
+@keyframes speakSpin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 
 /* MATCH */
 .match-cols{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
@@ -722,12 +724,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="setting-row">
         <div>
           <div class="setting-label">Голос</div>
-          <div class="setting-desc">Стандартный — системный TTS. Neural2 — живой голос Google (интернет)</div>
+          <div class="setting-desc">Стандартный — системный голос устройства. Gemini — живой голос ИИ (требует интернет, первое воспроизведение ~5 сек)</div>
         </div>
         <div class="setting-control">
           <select id="set-tts-mode" onchange="saveSetting('tts_mode',this.value)" style="width:auto;padding:8px 10px;">
             <option value="browser">Стандартный</option>
-            <option value="neural2">Neural2 ✨</option>
+            <option value="neural2">Gemini ✨</option>
           </select>
         </div>
       </div>
@@ -2737,19 +2739,24 @@ function _speakBrowser(text, btn, onEnd){
 async function _speakNeural2(text, btn, onEnd){
   const key=text.toLowerCase().trim();
   try{
+    // Показываем индикатор загрузки на кнопке
+    if(btn){btn.classList.add('loading');btn.style.opacity='1';}
+
     // Проверяем кэш в памяти
     if(_audioCache[key]){
+      if(btn)btn.classList.remove('loading');
       await _playAudioUrl(_audioCache[key]);
       onEnd(); return;
     }
-    // Проверяем кэш в словаре (audio_url в объекте слова)
+    // Проверяем кэш в словаре
     const word=words.find(w=>w.en.toLowerCase()===key);
     if(word?.audio_url){
       _audioCache[key]=word.audio_url;
+      if(btn)btn.classList.remove('loading');
       await _playAudioUrl(word.audio_url);
       onEnd(); return;
     }
-    // Запрашиваем у Edge Function
+    // Запрашиваем Edge Function
     const r=await fetch(`${SURL}/functions/v1/tts-word`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
@@ -2759,17 +2766,17 @@ async function _speakNeural2(text, btn, onEnd){
     const j=await r.json();
     if(!j.url)throw new Error('No URL returned');
     _audioCache[key]=j.url;
-    // Сохраняем в объект слова для следующего раза
     if(word){
       word.audio_url=j.url;
       wordsToCache(words);
-      // Сохраняем в БД тихо
       upW(word.id,{audio_url:j.url}).catch(()=>{});
     }
+    if(btn)btn.classList.remove('loading');
     await _playAudioUrl(j.url);
     onEnd();
   }catch(ex){
-    console.warn('Neural2 TTS failed, fallback to browser:', ex.message);
+    if(btn)btn.classList.remove('loading');
+    console.warn('Gemini TTS failed, fallback to browser:', ex.message);
     _speakBrowser(text, btn, onEnd);
   }
 }
