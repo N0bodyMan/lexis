@@ -719,6 +719,18 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <span class="toggle-slider"></span>
         </label>
       </div>
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Голос</div>
+          <div class="setting-desc">Стандартный — системный TTS. Neural2 — живой голос Google (интернет)</div>
+        </div>
+        <div class="setting-control">
+          <select id="set-tts-mode" onchange="saveSetting('tts_mode',this.value)" style="width:auto;padding:8px 10px;">
+            <option value="browser">Стандартный</option>
+            <option value="neural2">Neural2 ✨</option>
+          </select>
+        </div>
+      </div>
     </div>
     <div class="settings-section">
       <div class="settings-title">Резервная копия</div>
@@ -947,7 +959,7 @@ function scheduleMidnightReset(){
   },ms);
 }
 scheduleMidnightReset();
-let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:30,timer_modes:{fc:false,ch:true,ty:true,ma:false},auto_speak:true};
+let settings={daily_goal:10,fc_size:10,ch_size:10,ty_size:10,timer_on:false,timer_sec:5,timer_modes:{fc:false,ch:true,ty:true,ma:false},auto_speak:true,tts_mode:'browser'};
 
 // ── TELEGRAM ──────────────────────────────────
 window.Telegram?.WebApp?.ready();
@@ -1118,6 +1130,7 @@ function loadSettings(){
     const tty=document.getElementById('timer-ty');if(tty)tty.checked=tm.ty!==false;
     const tma=document.getElementById('timer-ma');if(tma)tma.checked=!!tm.ma;
     const sas=document.getElementById('set-auto-speak');if(sas)sas.checked=settings.auto_speak!==false;
+    const stts=document.getElementById('set-tts-mode');if(stts)stts.value=settings.tts_mode||'browser';
     // Тема — приоритет: настройки пользователя > localStorage
     if(settings.dark_theme!==undefined){
       setTheme(settings.dark_theme?'dark':'light',false);
@@ -1916,12 +1929,29 @@ function setDir(d){dir=d;['en','ru','mix'].forEach(x=>document.getElementById('d
 function getDir(){return dir==='mix'?(Math.random()<.5?'en':'ru'):dir;}
 
 // ── SESSION ───────────────────────────────────
+// srsQ: выбирает ровно n слов с приоритетом для новых/слабых
 function srsQ(pool,n){
-  const w=[];pool.forEach(x=>{const wt=Math.max(1,5-Math.floor((x.score||0)/2));for(let i=0;i<wt;i++)w.push(x);});
-  w.sort(()=>Math.random()-.5);const seen=new Set(),r=[];
-  for(const x of w){if(!seen.has(x.id)){seen.add(x.id);r.push(x);}if(r.length>=n)break;}
-  for(const x of pool){if(!seen.has(x.id)){seen.add(x.id);r.push(x);}if(r.length>=n)break;}
-  return r;
+  if(!pool.length)return[];
+  // Взвешенный список: слова с низким score попадают чаще
+  const weighted=[];
+  pool.forEach(x=>{
+    const wt=Math.max(1,5-Math.floor((x.score||0)/2));
+    for(let i=0;i<wt;i++)weighted.push(x);
+  });
+  weighted.sort(()=>Math.random()-.5);
+  // Дедупликация с сохранением порядка
+  const seen=new Set(),r=[];
+  for(const x of weighted){
+    if(!seen.has(x.id)){seen.add(x.id);r.push(x);}
+    if(r.length>=n)break;
+  }
+  // Если после взвешивания не хватило — добираем оставшиеся
+  for(const x of pool){
+    if(!seen.has(x.id)){seen.add(x.id);r.push(x);}
+    if(r.length>=n)break;
+  }
+  // Жёсткое ограничение — всегда ровно n (или меньше если слов вообще меньше)
+  return r.slice(0,n);
 }
 
 // Smart session — random mode selection
@@ -2673,29 +2703,89 @@ function e(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').re
 
 // ── SPEECH ────────────────────────────────────
 let _speakBtn=null;
-function speak(text,evOrBtn){
-  if(!('speechSynthesis' in window)){showSnack('Произношение не поддерживается в этом браузере');return;}
-  window.speechSynthesis.cancel();
-  // Анимация кнопки
-  if(_speakBtn){_speakBtn.classList.remove('speaking');}
+// ── SPEECH ────────────────────────────────────
+let _speakBtn=null;
+let _audioCache={}; // кэш URL аудио в памяти на сессию
+
+function speak(text, evOrBtn){
   const btn=evOrBtn instanceof Event?evOrBtn.currentTarget:(evOrBtn||null);
+  if(_speakBtn){_speakBtn.classList.remove('speaking');}
   _speakBtn=btn;
   if(btn)btn.classList.add('speaking');
+
+  const onEnd=()=>{if(btn)btn.classList.remove('speaking');_speakBtn=null;};
+
+  if(settings.tts_mode==='neural2'){
+    _speakNeural2(text, btn, onEnd);
+  } else {
+    _speakBrowser(text, btn, onEnd);
+  }
+}
+
+function _speakBrowser(text, btn, onEnd){
+  if(!('speechSynthesis' in window)){showSnack('Произношение не поддерживается');onEnd();return;}
+  window.speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(text);
-  u.lang='en-US';
-  u.rate=0.88;
-  u.pitch=1;
-  // Выбираем лучший доступный голос
+  u.lang='en-US'; u.rate=0.88; u.pitch=1;
   const voices=window.speechSynthesis.getVoices();
   const preferred=voices.find(v=>v.lang==='en-US'&&/google|natural|premium|enhanced|samantha|daniel/i.test(v.name))
     ||voices.find(v=>v.lang==='en-US')
     ||voices.find(v=>v.lang.startsWith('en'));
   if(preferred)u.voice=preferred;
-  u.onend=()=>{if(btn)btn.classList.remove('speaking');_speakBtn=null;};
-  u.onerror=()=>{if(btn)btn.classList.remove('speaking');_speakBtn=null;};
+  u.onend=onEnd; u.onerror=onEnd;
   window.speechSynthesis.speak(u);
 }
-// Предзагрузка голосов (браузеры загружают список асинхронно)
+
+async function _speakNeural2(text, btn, onEnd){
+  const key=text.toLowerCase().trim();
+  try{
+    // Проверяем кэш в памяти
+    if(_audioCache[key]){
+      await _playAudioUrl(_audioCache[key]);
+      onEnd(); return;
+    }
+    // Проверяем кэш в словаре (audio_url в объекте слова)
+    const word=words.find(w=>w.en.toLowerCase()===key);
+    if(word?.audio_url){
+      _audioCache[key]=word.audio_url;
+      await _playAudioUrl(word.audio_url);
+      onEnd(); return;
+    }
+    // Запрашиваем у Edge Function
+    const r=await fetch(`${SURL}/functions/v1/tts-word`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+      body:JSON.stringify({word:key})
+    });
+    if(!r.ok)throw new Error('TTS error '+r.status);
+    const j=await r.json();
+    if(!j.url)throw new Error('No URL returned');
+    _audioCache[key]=j.url;
+    // Сохраняем в объект слова для следующего раза
+    if(word){
+      word.audio_url=j.url;
+      wordsToCache(words);
+      // Сохраняем в БД тихо
+      upW(word.id,{audio_url:j.url}).catch(()=>{});
+    }
+    await _playAudioUrl(j.url);
+    onEnd();
+  }catch(ex){
+    console.warn('Neural2 TTS failed, fallback to browser:', ex.message);
+    _speakBrowser(text, btn, onEnd);
+  }
+}
+
+function _playAudioUrl(url){
+  return new Promise((resolve,reject)=>{
+    const audio=new Audio(url);
+    audio.onended=resolve;
+    audio.onerror=reject;
+    audio.play().catch(reject);
+  });
+}
+
+// Предзагрузка голосов браузера
 if('speechSynthesis' in window){
   window.speechSynthesis.getVoices();
   window.speechSynthesis.addEventListener('voiceschanged',()=>window.speechSynthesis.getVoices());
