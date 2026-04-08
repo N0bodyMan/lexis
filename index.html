@@ -1949,9 +1949,16 @@ function startSession(mode,pool){
   sM=mode;sI=0;sS=0;sMist=[];chA=false;fcR=false;
   if(mTmr){clearInterval(mTmr);mTmr=null;}
   if(sessionTimerInterval){clearInterval(sessionTimerInterval);sessionTimerInterval=null;}
-  const src=pool||(getDue().length>=4?getDue():words);
+  const n=getSessionSize(mode);
+  let src=pool||(getDue().length>=4?getDue():words);
   if(!src.length){showSnack('Добавь слова чтобы начать');return;}
-  sW=srsQ(src,getSessionSize(mode));
+  // Если пула не хватает до нужного размера — добираем из всех слов
+  if(src.length<n&&words.length>src.length){
+    const srcIds=new Set(src.map(w=>w.id));
+    const extra=words.filter(w=>!srcIds.has(w.id));
+    src=[...src,...extra];
+  }
+  sW=srsQ(src,n);
   document.getElementById('session-overlay').classList.add('active');
   const clock=document.getElementById('session-clock');
   if(isTimerActive(mode)){
@@ -2484,68 +2491,81 @@ function showRes(){
 // ── РЕЗЕРВНАЯ КОПИЯ ───────────────────────────
 function exportWords(){
   if(!words.length){showSnack('Нет слов для экспорта');return;}
-  const rows=[['en','ru','transcription','score','review_count']];
-  words.forEach(w=>rows.push([
-    w.en||'',
-    w.ru||'',
-    w.transcription||'',
-    w.score||0,
-    w.review_count||0
-  ]));
-  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const date=new Date().toISOString().slice(0,10);
 
-  // Пробуем скачать через браузер (работает в Safari/Chrome, не в Telegram WebView)
-  try{
-    const a=document.createElement('a');
-    a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-    a.download=`lexis_backup_${date}.csv`;
-    a.style.display='none';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }catch(_){}
+  // CSV для скачивания (полный формат с прогрессом)
+  const rows=[['en','ru','transcription','score','review_count']];
+  words.forEach(w=>rows.push([w.en||'',w.ru||'',w.transcription||'',w.score||0,w.review_count||0]));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
 
-  // Показываем модалку с текстом для копирования (работает везде)
-  _showExportModal(csv, date, words.length);
+  // Простой текст для копирования и вставки в импорт
+  const simple=words.map(w=>`${w.en} — ${w.ru}`).join('\n');
+
+  _showExportModal(csv, simple, date, words.length);
 }
 
-function _showExportModal(csv, date, count){
-  // Убираем старую если есть
+function _showExportModal(csv, simple, date, count){
   document.getElementById('export-modal')?.remove();
-
   const el=document.createElement('div');
   el.id='export-modal';
   el.style.cssText='position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;';
   el.innerHTML=`
-    <div style="background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:480px;padding:1.5rem;max-height:80vh;display:flex;flex-direction:column;gap:12px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;">
+    <div style="background:var(--card);border-radius:var(--r-xl) var(--r-xl) 0 0;width:100%;max-width:480px;padding:1.5rem;max-height:85vh;display:flex;flex-direction:column;gap:12px;overflow-y:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
         <div>
           <div style="font-size:15px;font-weight:600;color:var(--txt)">Резервная копия</div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px">${count} слов · ${date}</div>
         </div>
         <button onclick="document.getElementById('export-modal').remove()" style="background:none;border:none;font-size:20px;color:var(--muted);cursor:pointer;padding:4px;">✕</button>
       </div>
-      <div style="font-size:12px;color:var(--txt2);line-height:1.5;">
-        Нажми <strong>Скопировать</strong> и вставь текст в заметки или отправь себе в Telegram. При импорте вставь этот текст в поле импорта.
+
+      <div style="background:var(--bg);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;">
+        <div style="font-size:12px;font-weight:600;color:var(--txt);letter-spacing:.04em;text-transform:uppercase;">Скачать CSV</div>
+        <div style="font-size:12px;color:var(--txt2);line-height:1.5;">Полный файл с прогрессом обучения. Открой в браузере (не Telegram) для скачивания.</div>
+        <button onclick="_downloadCsv()" class="btn" style="align-self:flex-start;">⬇ Скачать файл</button>
       </div>
-      <textarea id="export-csv-text" readonly style="width:100%;height:140px;font-family:monospace;font-size:11px;background:var(--bg);border:1.5px solid var(--border);border-radius:var(--r);padding:10px;color:var(--txt2);resize:none;box-sizing:border-box;">${csv.replace(/</g,'&lt;')}</textarea>
-      <button onclick="_copyExportCsv()" class="btn solid full" style="width:100%">Скопировать текст</button>
+
+      <div style="background:var(--bg);border-radius:var(--r);padding:12px;display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:12px;font-weight:600;color:var(--txt);letter-spacing:.04em;text-transform:uppercase;">Скопировать слова</div>
+        <div style="font-size:12px;color:var(--txt2);line-height:1.5;">Простой список <strong>слово — перевод</strong>. Скопируй и вставь в поле «Быстрый импорт».</div>
+        <textarea id="export-simple-text" readonly style="width:100%;height:120px;font-size:12px;background:var(--card);border:1.5px solid var(--border);border-radius:var(--r);padding:10px;color:var(--txt2);resize:none;box-sizing:border-box;font-family:'Inter',sans-serif;">${simple}</textarea>
+        <button id="export-copy-btn" onclick="_copySimpleText()" class="btn solid" style="align-self:flex-start;">Скопировать</button>
+      </div>
     </div>`;
   document.body.appendChild(el);
-  el.addEventListener('click', ev=>{if(ev.target===el)el.remove();});
+  el.addEventListener('click',ev=>{if(ev.target===el)el.remove();});
+  // Сохраняем CSV для кнопки скачивания
+  el._csv=csv;el._date=date;
 }
 
-async function _copyExportCsv(){
-  const ta=document.getElementById('export-csv-text');
+function _downloadCsv(){
+  const el=document.getElementById('export-modal');
+  if(!el)return;
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(el._csv);
+  a.download=`lexis_backup_${el._date}.csv`;
+  a.style.display='none';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showSnack('✓ Файл скачивается...');
+}
+
+async function _copySimpleText(){
+  const ta=document.getElementById('export-simple-text');
+  const btn=document.getElementById('export-copy-btn');
   if(!ta)return;
   try{
     await navigator.clipboard.writeText(ta.value);
-    showSnack('✓ Скопировано в буфер обмена');
   }catch(_){
     ta.select();
     document.execCommand('copy');
-    showSnack('✓ Скопировано');
+  }
+  // Явная обратная связь
+  if(btn){
+    btn.textContent='✓ Скопировано!';
+    btn.style.background='var(--good)';
+    setTimeout(()=>{btn.textContent='Скопировать';btn.style.background='';},2000);
   }
 }
 
