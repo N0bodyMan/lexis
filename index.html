@@ -724,12 +724,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="setting-row">
         <div>
           <div class="setting-label">Голос</div>
-          <div class="setting-desc">Стандартный — системный голос устройства. Gemini — живой голос ИИ (требует интернет, первое воспроизведение ~5 сек)</div>
+          <div class="setting-desc">Стандартный — системный голос устройства. ElevenLabs — живой голос ИИ (~300 мс, требует интернет)</div>
         </div>
         <div class="setting-control">
           <select id="set-tts-mode" onchange="saveSetting('tts_mode',this.value)" style="width:auto;padding:8px 10px;">
             <option value="browser">Стандартный</option>
-            <option value="neural2">Gemini ✨</option>
+            <option value="neural2">ElevenLabs ✨</option>
           </select>
         </div>
       </div>
@@ -2739,9 +2739,7 @@ function _speakBrowser(text, btn, onEnd){
 async function _speakNeural2(text, btn, onEnd){
   const key=text.toLowerCase().trim();
   try{
-    // Показываем индикатор загрузки на кнопке
     if(btn){btn.classList.add('loading');btn.style.opacity='1';}
-
     // Проверяем кэш в памяти
     if(_audioCache[key]){
       if(btn)btn.classList.remove('loading');
@@ -2756,7 +2754,7 @@ async function _speakNeural2(text, btn, onEnd){
       await _playAudioUrl(word.audio_url);
       onEnd(); return;
     }
-    // Запрашиваем Edge Function
+    // Запрашиваем Edge Function — получаем base64 аудио напрямую
     const r=await fetch(`${SURL}/functions/v1/tts-word`,{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
@@ -2764,19 +2762,23 @@ async function _speakNeural2(text, btn, onEnd){
     });
     if(!r.ok)throw new Error('TTS error '+r.status);
     const j=await r.json();
-    if(!j.url)throw new Error('No URL returned');
-    _audioCache[key]=j.url;
-    if(word){
-      word.audio_url=j.url;
-      wordsToCache(words);
-      upW(word.id,{audio_url:j.url}).catch(()=>{});
-    }
+    if(j.error)throw new Error(j.error);
     if(btn)btn.classList.remove('loading');
-    await _playAudioUrl(j.url);
+    // Если вернулся URL (из кэша Storage) — играем по URL
+    if(j.url){
+      _audioCache[key]=j.url;
+      if(word){word.audio_url=j.url;wordsToCache(words);upW(word.id,{audio_url:j.url}).catch(()=>{});}
+      await _playAudioUrl(j.url);
+    // Если вернулся base64 — декодируем и играем сразу
+    } else if(j.audio){
+      const dataUrl='data:audio/mpeg;base64,'+j.audio;
+      _audioCache[key]=dataUrl;
+      await _playAudioUrl(dataUrl);
+    }
     onEnd();
   }catch(ex){
     if(btn)btn.classList.remove('loading');
-    console.warn('Gemini TTS failed, fallback to browser:', ex.message);
+    console.warn('ElevenLabs TTS failed, fallback to browser:', ex.message);
     _speakBrowser(text, btn, onEnd);
   }
 }
