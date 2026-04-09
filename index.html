@@ -1627,8 +1627,14 @@ function toggleSort(){
   renderList();
 }
 
-function getFilt(){
-  let list=[...words];
+function setFilter(f, btn){
+  wF=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  listPage=0;
+  renderList();
+}
+function getFilt(){  let list=[...words];
   if(wF==='new')list=list.filter(w=>(w.score||0)===0);
   else if(wF==='learning')list=list.filter(w=>(w.score||0)>0&&(w.score||0)<6);
   else if(wF==='know')list=list.filter(w=>(w.score||0)>=6);
