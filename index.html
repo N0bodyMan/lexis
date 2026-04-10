@@ -1440,7 +1440,7 @@ async function doImport(withTranslate=false){
     const limited=toTranslate.slice(0,20);
     const total=limited.length;
     if(total>0){
-      wrap.innerHTML=`<div class="toast"><div class="toast-title">Переводю слова...</div><div class="toast-pbar-wrap"><div class="toast-pbar" id="tr-pb" style="width:0%"></div></div><div class="toast-msg" id="tr-st">0 / ${total} · ~${total*3} сек</div></div>`;
+      wrap.innerHTML=`<div class="toast"><div class="toast-title">Перевожу слова...</div><div class="toast-pbar-wrap"><div class="toast-pbar" id="tr-pb" style="width:0%"></div></div><div class="toast-msg" id="tr-st">0 / ${total} · ~${total*3} сек</div></div>`;
       let done=0;
       for(const w of limited){
         try{
