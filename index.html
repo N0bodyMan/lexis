@@ -990,16 +990,19 @@ window.Telegram?.WebApp?.expand();
     }
   }
 
-  // Фолбэк: прямой вход по tg_id (только если Edge Function недоступна)
+  // Фолбэк: поиск по tg_id через auth-restore если Edge Function недоступна
   if(tg.initDataUnsafe?.user){
     const tgUser=tg.initDataUnsafe.user;
     const tgId=String(tgUser.id);
     console.log('[TG] Fallback: tgId='+tgId);
     try{
-      // Только поиск существующего — создание через Edge Function
-      const found=await dbQ(`users?tg_id=eq.${encodeURIComponent(tgId)}&select=id,name,tg_id,daily_goal,streak,last_practice,settings`);
-      const u=found&&found[0]||null;
-      if(u){console.log('[TG] Fallback found user:',u.name);await lok(u);}
+      const r=await fetch(`${SURL}/functions/v1/auth-restore`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+SKEY},
+        body:JSON.stringify({tg_id:tgId})
+      });
+      const j=await r.json();
+      if(j.user){console.log('[TG] Fallback found user:',j.user.name);await lok(j.user);}
       else console.warn('[TG] User not found, Edge Function required for registration');
     }catch(ex){console.error('[TG] Fallback error:', ex.message);}
   }
