@@ -46,14 +46,31 @@ async function dbRPC(fn, params) {
   return r.json();
 }
 
-// ── Пользователи (только чтение безопасных полей) ─────
-// Авто-вход по id — без pass_hash и salt
-const gUById = id => dbQ(
-  `users?id=eq.${id}&select=id,name,tg_id,daily_goal,streak,last_practice,settings`
-).then(r => r && r[0] || null);
+// ── Пользователи (только через Edge Functions) ────────
+// Авто-вход — через auth-restore, не прямой запрос к users
+async function gUById(id) {
+  const r = await fetch(`${SURL}/functions/v1/auth-restore`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+    body: JSON.stringify({ id })
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j.user || null;
+}
 
-// Обновление настроек пользователя
-const uU = (id, f) => dbQ(`users?id=eq.${id}`, 'PATCH', f);
+// Обновление пользователя — через user-update, не прямой PATCH
+async function uU(id, fields) {
+  try {
+    await fetch(`${SURL}/functions/v1/user-update`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SKEY },
+      body: JSON.stringify({ id, fields })
+    });
+  } catch(e) {
+    console.warn('user-update failed:', e.message);
+  }
+}
 
 // ── Слова ─────────────────────────────────────────────
 const gW  = uid => dbQ(`words?user_id=eq.${uid}&order=created_at.asc&select=*`);
