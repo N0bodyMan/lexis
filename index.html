@@ -1823,7 +1823,7 @@ function renderModalView(id){
     ${ctxHtml}
     <button class="chat-toggle-btn" onclick="openChatOverlay(${id})">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-      Спросить про это слово
+      Обсудить слово
     </button>`;
   document.getElementById('modal-actions').innerHTML=`<button class="btn danger-btn full" onclick="deleteWord(${id});closeWordModal()">Удалить слово</button>`;
   document.getElementById('modal-edit-btn').textContent='✏️';
