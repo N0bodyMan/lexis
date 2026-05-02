@@ -1276,7 +1276,9 @@ function wordsToCache(arr){
       // SM-2 — источник истины БД, кэшируем для быстрого UI
       sm2_ef:w.sm2_ef, sm2_intv:w.sm2_intv, sm2_reps:w.sm2_reps,
       // Контексты — кэшируем чтобы не пропадали после перезагрузки
-      example_en:w.example_en, example_ru:w.example_ru, usage_note:w.usage_note
+      example_en:w.example_en, example_ru:w.example_ru, usage_note:w.usage_note,
+      // Флаг пропуска
+      is_skipped:w.is_skipped||false
     }));
     localStorage.setItem(cacheKey(), JSON.stringify({ts:Date.now(), data:slim}));
   }catch(e){
@@ -2241,12 +2243,14 @@ function _doCloseSession(){
 }
 
 // ── KEYBOARD SCROLL FIX ───────────────────────
-// На мобильных при открытии клавиатуры поле ввода может быть перекрыто.
-// Скроллим к полю после небольшой задержки (после того как клавиатура открылась).
+// Скроллим к полю ввода когда открывается клавиатура.
+// Исключаем поля внутри модалки слова (там свой скролл) и чата.
 document.addEventListener('focusin', ev => {
   const tag = ev.target.tagName;
   if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
-  // Небольшая задержка — клавиатура открывается ~300мс
+  // Не мешаем модалке слова и чату — у них свои обработчики
+  if (ev.target.closest('#word-modal')) return;
+  if (ev.target.closest('#chat-overlay')) return;
   setTimeout(() => {
     ev.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 350);
