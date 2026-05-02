@@ -197,6 +197,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .we{font-size:13px;font-weight:600;color:var(--txt);}
 .wtr{font-size:11px;color:var(--muted);}
 .wi-ctx-dot{font-size:10px;color:var(--acc);opacity:.7;flex-shrink:0;}
+.wi-skip-dot{font-size:11px;color:var(--muted);opacity:.8;flex-shrink:0;}
 .wr{font-size:12px;color:var(--txt2);margin-top:2px;}
 /* Кнопка озвучки — inline рядом со словом */
 .wi-speak{
@@ -1751,7 +1752,7 @@ function _renderListPage(reset){
       <div class="wi-check" onclick="toggleWordSelect(${w.id},event)">${sel?'✓':''}</div>
       <div class="wi-content">
         <div class="wi-word-row">
-          <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}${w.example_en?` <span class="wi-ctx-dot" title="Есть пример употребления">✦</span>`:''}
+          <span class="we">${e(w.en)}</span>${w.transcription?` <span class="wtr">[${e(w.transcription)}]</span>`:''}${w.example_en?` <span class="wi-ctx-dot" title="Есть пример употребления">✦</span>`:''}${w.is_skipped?` <span class="wi-skip-dot" title="Не участвует в упражнениях">⊘</span>`:''}
           <button class="wi-speak" onclick="event.stopPropagation();speak('${e(w.en).replace(/'/g,"\\'")}',event)" title="Прослушать"><svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 4L6 8H3a1 1 0 00-1 1v2a1 1 0 001 1h3l5 4V4z" fill="currentColor"/><path d="M14.5 6.5a4 4 0 010 7M16.5 4.5a7 7 0 010 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
         </div>
         ${transHtml}
@@ -1824,7 +1825,17 @@ function renderModalView(id){
     <button class="chat-toggle-btn" onclick="openChatOverlay(${id})">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
       Обсудить слово
-    </button>`;
+    </button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding:10px 0;border-top:1px solid var(--border)">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--txt)">Не участвует в упражнениях</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Слово остаётся в словаре, но пропускается</div>
+      </div>
+      <label class="toggle">
+        <input type="checkbox" ${w.is_skipped?'checked':''} onchange="toggleSkipWord(${id},this.checked)"/>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>`;
   document.getElementById('modal-actions').innerHTML=`<button class="btn danger-btn full" onclick="deleteWord(${id});closeWordModal()">Удалить слово</button>`;
   document.getElementById('modal-edit-btn').textContent='✏️';
 }
@@ -2001,13 +2012,48 @@ async function sendChatMsg(wordId){
     _chatHistory[wordId].push({role:'assistant',content:j.reply});
   }catch(ex){
     typing?.remove();
-    _chatAddMsg(wordId,'bot','Не удалось получить ответ. Попробуй ещё раз.');
+    // Сообщение об ошибке с кнопкой повтора
+    const msgs=document.getElementById('chat-msgs-overlay');
+    if(msgs){
+      const div=document.createElement('div');
+      div.className='chat-msg chat-msg-bot';
+      div.innerHTML=`<div class="chat-bubble chat-bubble-bot" style="display:flex;align-items:center;gap:8px;">
+        <span style="color:var(--muted);font-size:13px;">Не удалось получить ответ</span>
+        <button onclick="retryLastChat(${wordId},'${text.replace(/'/g,"\\'")}')" style="background:none;border:1px solid var(--border);border-radius:20px;padding:4px 10px;font-size:12px;color:var(--acc);cursor:pointer;flex-shrink:0;white-space:nowrap;">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="width:12px;height:12px;vertical-align:middle;margin-right:3px"><path d="M1.5 8a6.5 6.5 0 1 0 1.1-3.6"/><polyline points="1.5,1.5 1.5,4.5 4.5,4.5"/></svg>
+          Повторить
+        </button>
+      </div>`;
+      msgs.appendChild(div);
+      msgs.scrollTop=msgs.scrollHeight;
+    }
     console.warn('word-chat error:',ex.message);
   }finally{
     inp.disabled=false;if(sendBtn)sendBtn.disabled=false;
     setTimeout(()=>inp.focus(),50);
   }
 }
+function retryLastChat(wordId, text){
+  const msgs=document.getElementById('chat-msgs-overlay');
+  if(msgs&&msgs.lastChild)msgs.removeChild(msgs.lastChild);
+  if(_chatHistory[wordId]?.length){
+    const last=_chatHistory[wordId][_chatHistory[wordId].length-1];
+    if(last.role==='user'&&last.content===text)_chatHistory[wordId].pop();
+  }
+  const inp=document.getElementById('chat-inp-overlay');
+  if(inp){inp.value=text;}
+  sendChatMsg(wordId);
+}
+
+async function toggleSkipWord(id, skip){
+  const w=words.find(x=>x.id===id);if(!w)return;
+  w.is_skipped=skip;
+  wordsToCache(words);
+  await upW(id,{is_skipped:skip});
+  renderList();
+  showSnack(skip?'⊘ Слово пропускается в упражнениях':'✓ Слово снова участвует в упражнениях');
+}
+
 async function generateContext(wordId, isRegen){
   const w=words.find(x=>x.id===wordId);if(!w)return;
   const btnId=isRegen?'ctx-regen-btn':'ctx-gen-btn';
@@ -2137,6 +2183,8 @@ function startSession(mode,pool){
   const n=getSessionSize(mode);
   let src=pool||(getDue().length>=4?getDue():words);
   if(!src.length){showSnack('Добавь слова чтобы начать');return;}
+  // Убираем слова помеченные как "не участвует в упражнениях"
+  src=src.filter(w=>!w.is_skipped);
   // Если пула не хватает до нужного размера — добираем из всех слов
   if(src.length<n&&words.length>src.length){
     const srcIds=new Set(src.map(w=>w.id));
@@ -2191,6 +2239,18 @@ function _doCloseSession(){
   document.getElementById('session-overlay').classList.remove('active');
   renderDash();renderList();
 }
+
+// ── KEYBOARD SCROLL FIX ───────────────────────
+// На мобильных при открытии клавиатуры поле ввода может быть перекрыто.
+// Скроллим к полю после небольшой задержки (после того как клавиатура открылась).
+document.addEventListener('focusin', ev => {
+  const tag = ev.target.tagName;
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
+  // Небольшая задержка — клавиатура открывается ~300мс
+  setTimeout(() => {
+    ev.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 350);
+}, { passive: true });
 
 // ── MODAL SCROLL LOCK ─────────────────────────
 // iOS сбрасывает scrollTop контейнера при focus() на любой input внутри него.
