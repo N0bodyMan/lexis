@@ -1693,7 +1693,7 @@ function setFilter(f, btn){
 }
 function getFilt(){  let list=[...words];
   if(wF==='new')list=list.filter(w=>(w.score||0)===0);
-  else if(wF==='learning')list=list.filter(w=>(w.score||0)>0&&(w.score||0)<6);
+  else if(wF==='learning')list=list.filter(w=>(w.score||0)>=1&&(w.score||0)<6);
   else if(wF==='know')list=list.filter(w=>(w.score||0)>=6);
   const q=(document.getElementById('search-inp')?.value||'').toLowerCase().trim();
   if(q)list=list.filter(w=>w.en.toLowerCase().includes(q)||w.ru.toLowerCase().includes(q));
@@ -1744,7 +1744,7 @@ function _renderListPage(reset){
   const hasMore=list.length>slice.length;
   const html=slice.map(w=>{
     const s=w.score||0;let c='b-new',l='Новое';
-    if(s>=6){c='b-know';l='Знаю';}else if(s>=2){c='b-learn';l='Учу';}
+    if(s>=6){c='b-know';l='Знаю';}else if(s>=1){c='b-learn';l='Учу';}
     const sel=selectedWords.has(w.id);
     const trans=getWordTranslations(w);
     const transHtml=trans.length>1
@@ -2095,7 +2095,7 @@ async function generateContext(wordId, isRegen){
 }
 
 // ── DASHBOARD ─────────────────────────────────
-function getDue(){return words.filter(w=>!w.next_review||new Date(w.next_review)<=new Date());}
+function getDue(){return words.filter(w=>!w.is_skipped&&(!w.next_review||new Date(w.next_review)<=new Date()));}
 function renderDash(){
   const tot=words.length,know=words.filter(w=>(w.score||0)>=6).length,learn=words.filter(w=>(w.score||0)>0&&(w.score||0)<6).length,nw=words.filter(w=>(w.score||0)===0).length;
   document.getElementById('d-total').textContent=tot;document.getElementById('d-know').textContent=know;document.getElementById('d-learn').textContent=learn;document.getElementById('d-new').textContent=nw;
@@ -2123,7 +2123,7 @@ function renderDash(){
   document.getElementById('word-map-header').style.display='';
   document.getElementById('due-header').style.display='';
   if(!dList.length){dl.innerHTML='<div class="empty" style="padding:1rem">Все слова повторены 🎉</div>';return;}
-  dl.innerHTML=dList.map(w=>{const s=w.score||0;let c='b-new',l='Новое';if(s>=6){c='b-know';l='Знаю';}else if(s>=2){c='b-learn';l='Учу';}return`<div class="due-item" onclick="openModal(${w.id})"><span class="due-en">${e(w.en)}</span><span class="due-ru">${e(getPrimary(w))}</span><span class="badge ${c}">${l}</span></div>`;}).join('');
+  dl.innerHTML=dList.map(w=>{const s=w.score||0;let c='b-new',l='Новое';if(s>=6){c='b-know';l='Знаю';}else if(s>=1){c='b-learn';l='Учу';}return`<div class="due-item" onclick="openModal(${w.id})"><span class="due-en">${e(w.en)}</span><span class="due-ru">${e(getPrimary(w))}</span><span class="badge ${c}">${l}</span></div>`;}).join('');
 }
 
 // ── NAV ───────────────────────────────────────
@@ -2507,13 +2507,26 @@ function rFC(w){
 }
 function rvFC(){stopQTimer();fcR=true;rFC(sW[sI]);}
 
+let _fcBusy=false; // защита от двойного нажатия
 async function fcRt(id,grade){
-  const g=grade<=0?0:grade===1?1:2;
-  const w=sW[sI];
-  if(g>0){sS++;}else sMist.push(w);
-  await upScore(id,grade);
-  markDailyWordIfLearned(id, w.sm2_intv||0);
-  fcR=false;sI++;renderCard();
+  if(_fcBusy)return;
+  _fcBusy=true;
+  try{
+    const g=grade<=0?0:grade===1?1:2;
+    const w=sW[sI];
+    if(g>0){sS++;}else sMist.push(w);
+    // Анимируем и переходим
+    const dir=g>0?'right':'left';
+    animateCardAndThen(dir, async()=>{
+      try{ await upScore(id,grade); }catch(ex){ console.warn('upScore failed:',ex.message); }
+      markDailyWordIfLearned(id, w.sm2_intv||0);
+      fcR=false;sI++;_fcBusy=false;renderCard();
+    });
+  }catch(ex){
+    console.warn('fcRt error:',ex.message);
+    _fcBusy=false;
+    fcR=false;sI++;renderCard();
+  }
 }
 
 // CHOICE — правильный любой перевод из списка
@@ -2556,13 +2569,14 @@ async function aCH(wid, optId, isCorrect, timedOut){
     }
     sMist.push(sW[sI]);
     const ex=document.getElementById('we2');ex.style.display='block';
-    // Читаем сохранённое направление — не вызываем getDir() повторно
     const savedDir=document.getElementById('sbody').dataset.dir||'en';
     const correctAns=savedDir==='en'?getWordTranslations(sW[sI]):[sW[sI].en];
     ex.textContent=(timedOut?'⏱ Время вышло! ':'')+'Правильно: '+correctAns.join(' / ');
   }else{sS++;markDailyWordIfLearned(sW[sI]?.id, sW[sI]?.sm2_intv||0);}
-  await upScore(wid,ok?2:-1);
-  document.getElementById('nxt').style.display='block';
+  // Показываем кнопку сразу — не ждём upScore чтобы не зависнуть
+  const nxt=document.getElementById('nxt');
+  if(nxt)nxt.style.display='block';
+  try{ await upScore(wid,ok?2:-1); }catch(ex){ console.warn('upScore failed:',ex.message); }
 }
 function nCH(){chA=false;sI++;renderCard();}
 
