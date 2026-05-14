@@ -119,7 +119,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .word-map{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:1.25rem;}
 .wm-dot{width:16px;height:16px;border-radius:4px;cursor:pointer;transition:transform .1s;}
 .wm-dot:hover{transform:scale(1.3);}
-.wm-0{background:#e74c3c;}.wm-1{background:#e67e22;}.wm-2{background:#f1c40f;}.wm-3{background:#2ecc71;}.wm-4{background:#27ae60;}
+.wm-0{background:#e74c3c;}
+.wm-1{background:#e67e22;}
+.wm-2{background:#f1c40f;}
+.wm-3{background:#f1c40f;}
+.wm-4{background:#f1c40f;}
+.wm-5{background:#f1c40f;}
+.wm-6{background:#27ae60;}
 .due-list{display:flex;flex-direction:column;gap:4px;margin-bottom:1rem;}
 .due-item{display:flex;align-items:center;gap:10px;padding:10px 13px;background:var(--card);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .12s;box-shadow:var(--sh);}
 .due-item:hover{border-color:var(--border2);}
@@ -405,7 +411,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .fc-ctx-ru{font-size:11px;color:var(--muted);line-height:1.5;}
 .modal-meta{font-size:12px;color:var(--muted);margin-bottom:5px;}
 .modal-score-bar{height:6px;background:var(--border);border-radius:3px;margin:8px 0 1rem;}
-.modal-score-fill{height:6px;border-radius:3px;background:var(--acc);}
+.modal-score-fill{height:6px;border-radius:3px;}
+.modal-score-fill.lvl-new{background:var(--danger);}
+.modal-score-fill.lvl-learn{background:var(--warn);}
+.modal-score-fill.lvl-know{background:var(--good);}
 .modal-actions{padding:0 1.25rem 1.25rem;display:flex;flex-direction:column;gap:8px;}
 
 /* TOAST */
@@ -1799,6 +1808,9 @@ function closeWordModal(){
 function renderModalView(id){
   const w=words.find(x=>x.id===id);if(!w)return;
   const s=w.score||0,pct=Math.round((s/6)*100),rev=w.last_reviewed?new Date(w.last_reviewed).toLocaleDateString('ru-RU'):'никогда';
+  const scoreLvl=s>=6?'lvl-know':s>=1?'lvl-learn':'lvl-new';
+  const scoreLabel=s>=6?'Знаю':s>=1?'Учу':'Новое';
+  const scoreBadgeClass=s>=6?'b-know':s>=1?'b-learn':'b-new';
   const trans=getWordTranslations(w);
 
   // Блок контекста
@@ -1821,8 +1833,8 @@ function renderModalView(id){
     ${w.transcription?`<div class="modal-tr">[${e(w.transcription)}]</div>`:''}
     <div class="modal-translations">${trans.map(t=>`<span class="modal-trans-pill">${e(t)}</span>`).join('')}</div>
     <div class="modal-meta">Повторений: ${w.review_count||0} · Последний раз: ${rev}</div>
-    <div class="modal-score-bar"><div class="modal-score-fill" style="width:${pct}%"></div></div>
-    <div class="modal-meta">Уровень знания: ${s}/6</div>
+    <div class="modal-score-bar"><div class="modal-score-fill ${scoreLvl}" style="width:${pct}%"></div></div>
+    <div class="modal-meta" style="display:flex;align-items:center;gap:8px;">Уровень знания: ${s}/6 <span class="badge ${scoreBadgeClass}" style="font-size:11px;padding:2px 8px;">${scoreLabel}</span></div>
     ${ctxHtml}
     <button class="chat-toggle-btn" onclick="openChatOverlay(${id})">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
@@ -2103,7 +2115,7 @@ function renderDash(){
   document.getElementById('goal-total').textContent=goal;document.getElementById('goal-done').textContent=dDone;document.getElementById('goal-pct').textContent=pct+'%';
   document.getElementById('goal-arc').style.strokeDashoffset=113-(113*pct/100);
   document.getElementById('study-badge').textContent=getDue().length>0?getDue().length+' слов':'';
-  document.getElementById('word-map').innerHTML=words.map(w=>`<div class="wm-dot wm-${Math.min(4,w.score||0)}" title="${e(w.en)}" onclick="openModal(${w.id})"></div>`).join('');
+  document.getElementById('word-map').innerHTML=words.map(w=>`<div class="wm-dot wm-${Math.min(6,w.score||0)}" title="${e(w.en)}" onclick="openModal(${w.id})"></div>`).join('');
   const dList=getDue().slice(0,8);document.getElementById('due-count').textContent=getDue().length||'';
   const dl=document.getElementById('due-list');
   // Пустой словарь — онбординг-состояние
