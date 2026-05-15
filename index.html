@@ -2147,25 +2147,30 @@ function getDir(){return dir==='mix'?(Math.random()<.5?'en':'ru'):dir;}
 // srsQ: выбирает ровно n слов с приоритетом для новых/слабых
 function srsQ(pool,n){
   if(!pool.length)return[];
-  // Взвешенный список: слова с низким score попадают чаще
+  // Веса: чем ниже score — тем чаще попадает
+  // score 0=6, score 1-2=5, score 3-4=4, score 5=2, score 6=1
+  function wt(s){
+    if(s===0)return 6;
+    if(s<=2)return 5;
+    if(s<=4)return 4;
+    if(s===5)return 2;
+    return 1;
+  }
   const weighted=[];
   pool.forEach(x=>{
-    const wt=Math.max(1,5-Math.floor((x.score||0)/2));
-    for(let i=0;i<wt;i++)weighted.push(x);
+    const w=wt(x.score||0);
+    for(let i=0;i<w;i++)weighted.push(x);
   });
   weighted.sort(()=>Math.random()-.5);
-  // Дедупликация с сохранением порядка
   const seen=new Set(),r=[];
   for(const x of weighted){
     if(!seen.has(x.id)){seen.add(x.id);r.push(x);}
     if(r.length>=n)break;
   }
-  // Если после взвешивания не хватило — добираем оставшиеся
   for(const x of pool){
     if(!seen.has(x.id)){seen.add(x.id);r.push(x);}
     if(r.length>=n)break;
   }
-  // Жёсткое ограничение — всегда ровно n (или меньше если слов вообще меньше)
   return r.slice(0,n);
 }
 
@@ -2199,10 +2204,10 @@ function startSession(mode,pool){
   if(!src.length){showSnack('Добавь слова чтобы начать');return;}
   // Убираем слова помеченные как "не участвует в упражнениях"
   src=src.filter(w=>!w.is_skipped);
-  // Если пула не хватает до нужного размера — добираем из всех слов
+  // Если пула не хватает до нужного размера — добираем из всех слов (тоже без is_skipped)
   if(src.length<n&&words.length>src.length){
     const srcIds=new Set(src.map(w=>w.id));
-    const extra=words.filter(w=>!srcIds.has(w.id));
+    const extra=words.filter(w=>!srcIds.has(w.id)&&!w.is_skipped);
     src=[...src,...extra];
   }
   sW=srsQ(src,n);
@@ -2673,13 +2678,19 @@ async function chkTY(){
   const primaryCorrect=d==='en'?getPrimary(w):w.en;
   if(r==='ok'){
     res.className='t-result t-ok';res.textContent='✓ Верно!';
-    sS++;await upScore(wid,2);markDailyWordIfLearned(wid,w.sm2_intv||0);sI++;setTimeout(renderCard,1200);
+    sS++;markDailyWordIfLearned(wid,w.sm2_intv||0);
+    sI++;setTimeout(renderCard,1200);
+    upScore(wid,2).catch(ex=>console.warn('upScore:',ex.message));
   }else if(r==='near'){
     res.className='t-result t-near';res.textContent='~ Почти! Правильно: '+primaryCorrect;
-    await upScore(wid,1);markDailyWordIfLearned(wid,w.sm2_intv||0);sI++;setTimeout(renderCard,1800);
+    markDailyWordIfLearned(wid,w.sm2_intv||0);
+    sI++;setTimeout(renderCard,1800);
+    upScore(wid,1).catch(ex=>console.warn('upScore:',ex.message));
   }else{
     res.className='t-result t-fail';res.textContent='✗ '+primaryCorrect;
-    sMist.push(sW[sI]);await upScore(wid,-1);sI++;setTimeout(renderCard,1800);
+    sMist.push(sW[sI]);
+    sI++;setTimeout(renderCard,1800);
+    upScore(wid,-1).catch(ex=>console.warn('upScore:',ex.message));
   }
 }
 
