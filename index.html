@@ -2179,7 +2179,14 @@ function startSmartSession(){
   if(!words.length){showSnack('Сначала добавь слова!');return;}
   const modes=['flashcard','choice','typing'];
   const m=modes[Math.floor(Math.random()*modes.length)];
-  const due=getDue();startSession(m,due.length>0?due:words);
+  // Приоритетный пул: слова к повторению + все слова "учу" (score 1-5)
+  const due=getDue();
+  const learning=words.filter(w=>!w.is_skipped&&(w.score||0)>=1&&(w.score||0)<6);
+  // Объединяем due и learning (дедупликация по id)
+  const priorityIds=new Set([...due.map(w=>w.id),...learning.map(w=>w.id)]);
+  const priority=words.filter(w=>priorityIds.has(w.id)&&!w.is_skipped);
+  const pool=priority.length>0?priority:words.filter(w=>!w.is_skipped);
+  startSession(m,pool);
 }
 
 function getSessionSize(mode){
@@ -2546,16 +2553,16 @@ async function fcRt(id,grade){
   }
 }
 
-// CHOICE — правильный любой перевод из списка
 function rCH(w){
-  const d=getDir(),q=d==='en'?w.en:getPrimary(w);
-  const allTrans=d==='en'?getWordTranslations(w):[w.en];
-  const primary=allTrans[0];
-
-  const oth=words.filter(x=>x.id!==w.id).sort(()=>Math.random()-.5).slice(0,3);
+  const d=getDir();
+  // При RU→EN показываем случайный перевод из всех имеющихся
+  const allTrans=getWordTranslations(w);
+  const randomTrans=d==='ru'?allTrans[Math.floor(Math.random()*allTrans.length)]||getPrimary(w):null;
+  const q=d==='en'?w.en:randomTrans;
   const opts=[
-    {id:w.id,t:primary,correct:true},
-    ...oth.map(o=>({id:o.id,t:d==='en'?getPrimary(o):o.en,correct:false}))
+    {id:w.id,t:d==='en'?getPrimary(w):w.en,correct:true},
+    ...words.filter(x=>x.id!==w.id).sort(()=>Math.random()-.5).slice(0,3)
+      .map(o=>({id:o.id,t:d==='en'?getPrimary(o):o.en,correct:false}))
   ].sort(()=>Math.random()-.5);
 
   const sb=document.getElementById('sbody');
@@ -2600,10 +2607,12 @@ function nCH(){chA=false;sI++;renderCard();}
 // TYPING
 // smatch: проверяет введённое слово против списка правильных ответов
 function smatch(a,trans){
-  const x=a.toLowerCase().trim();
+  // Нормализуем ё→е для сравнения (е и ё считаются одинаково)
+  const norm=s=>s.toLowerCase().trim().replace(/ё/g,'е');
+  const x=norm(a);
   const strip=s=>s.replace(/^(a |an |the |to )/i,'').trim();
-  for(const t of trans){const y=t.toLowerCase().trim();if(x===y||strip(x)===strip(y))return'ok';}
-  const y=trans[0]?.toLowerCase().trim()||'';
+  for(const t of trans){const y=norm(t);if(x===y||strip(x)===strip(y))return'ok';}
+  const y=norm(trans[0]||'');
   if(Math.abs(x.length-y.length)<=2){let d=0;for(let i=0;i<Math.max(x.length,y.length);i++)if(x[i]!==y[i])d++;if(d<=2&&d>0)return'near';}
   return'fail';
 }
@@ -2612,13 +2621,15 @@ function smatch(a,trans){
 // d='ru' = RU→EN: показываем русское слово, пользователь вводит английское
 function rTY(w){
   const d=getDir();
-  // Вопрос: что показываем пользователю
-  const q = d==='en' ? w.en : getPrimary(w);
-  // Транскрипция показывается когда задаём английское слово
+  // При RU→EN показываем случайный перевод из всех имеющихся
+  const allTrans=getWordTranslations(w);
+  const randomTrans=allTrans[Math.floor(Math.random()*allTrans.length)]||getPrimary(w);
+  const q = d==='en' ? w.en : randomTrans;
   const showTr = w.transcription && d==='en';
   const sb=document.getElementById('sbody');
   sb.dataset.wid=w.id;
   sb.dataset.dir=d;
+  sb.dataset.qtrans=randomTrans; // сохраняем показанный перевод для подсказки
   sb.innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:.5rem">
       <div class="t-question" style="margin-bottom:0">${e(q)}</div>
